@@ -1,1 +1,0 @@
-"# thankjapan-django2" 

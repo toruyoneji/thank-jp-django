@@ -1,6 +1,6 @@
 
 {% extends 'basecategory.html' %}
-{% block title %}Work{% endblock %}
+{% block title %}Jobs & Occupations in Japan | Career & Work Culture Guide | ThankJapan{% endblock %}
 
 {% block content %}
 
@@ -9,9 +9,17 @@
     
         {% for item in object_list %}
                                            
+            {% if item.image %}
+                                           
                 <a href="{% url 'detail' item.id %}">
-                    <img class="gazou" src="{{ item.image.url }}" alt="No image..." />
+                    <img class="gazou" src="{{ item.image.url }}" alt="{{ item.englishname }}" />
                 </a>
+
+            {% else %}
+
+                <p>No image available</p>
+
+            {% endif %}
           
         {% endfor %}
           

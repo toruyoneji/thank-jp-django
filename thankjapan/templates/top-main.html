@@ -2,7 +2,18 @@
 <div class="main">
     
     <p class="document">
-        Hello everyone, this is ThankJapan.
+        <strong>Experience Japan — through its culture, language, and food.<br>
+        Made for curious minds and global learners.</strong></p>
+        <hr>
+        <p class="document">
+            <h2>Trending Categories</h2>
+            ↓↓
+            <h3><strong><a href="{% url 'foodpage' %}">Food</a></strong>  <strong><a href="{% url 'culturepage' %}">culture</a></strong>  
+            <strong><a href="{% url 'animalpage' %}">Animal</a></strong>  <strong><a href="{% url 'flowerpage' %}">Flower</a></strong>
+            <strong><a href="{% url 'cookpage'%}">Cook</a></strong></h3>
+        </p>
+        <hr>
+        <p class="document">Hello everyone, this is ThankJapan.
         I'm sending this message from Japan.
         Have you ever been to Japan?
         Japan is a country surrounded by the sea.
@@ -10,27 +21,20 @@
         Let’s study Japanese together!
         I’m looking forward to the day I can meet you all.
         Have a great day!<br>
-        You can log in or sign up from the left side, just below "Home" and above "Category."<br><hr>
-        <p class="document">
-        To register as a member, click on Sign Up, then enter your email address and password, and press the Sign Up button.
-        Next, a verification URL will be sent to the email address you provided. 
-        Click on that link to return to the Sign Up screen, then click the Confirm button to complete your registration.
-        After that, go back to the home page and log in.<br>
-        ※Please note that if your password is too similar to your email address, it may result in an error. 
-        Also, please make sure to keep your password and email address secure and confidential.
+        Once you've learned a bit, try the <strong><a href="{% url 'game_start' %}">game</a></strong> to test your knowledge. Questions will appear randomly!
+        <hr>
         </p>
-        <br><hr>
+        
         <p class="document">
-        When you click "Logout," you will be automatically logged out.ease return to the Home page by clicking Home after logging out.
-        To log in again, simply click Login.
-        During the tournament, please click Withdrawal on the right and enter your email address and password.<br>
-        (On smartphones and similar devices, it's located between "Home" and "Category" at the top.)</p>
-    </p><hr>
+        For company information, terms of use, privacy policy, and inquiries, please visit the <strong>Company</strong> tab.
+        To help maintain this site, we appreciate your support. Contributions will be used for company operations and 	site maintenance.
+        <br>You can make a donation via the <strong><a href="{% url 'select_amount' %}">Support</a></strong> tab by selecting an amount and completing the 	payment through <strong>PayPal (bank account, PayPal, or credit card)</strong>.<br>
+        <em>Please note that we do not offer refunds after the payment has been made.
+        </p>
+        <hr>
 
     <h2 class="h2">How to use this site:</h2>
         <p class="document">
-        You can view this site for free, and by signing up, you can access even more content. 
-        To sign up, click on the word 'Signup' and follow the registration process.
         Please select your preferred genre from the categories on the left.
         After selecting a genre, you will be taken to that genre’s page.
         Click on any item that interests you, 
@@ -40,36 +44,65 @@
 
         <p class="yajirushi">↓↓</p>
         
-        <img class="image" src="{% static 'css/hujisan.png' %}" alt="fujisan" width={900} height={500}/>
+        <a href="{% url 'naturepage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645312/thankjapan/backgrounds/hutwikylfzofnnzrahgh.png" 
+        alt="fujisan" width="900" height="500"/></a>
             <dl>
+                <dt class="dt">Mount Fuji(English Name)</dt>
+                <dt class="dt">Japanese Name: 富士山 ← Kanji or Hiragana or Katakana</dt>
                 <dt class="dt">Name: Fuzisan ← Romaji</dt>
                 <dd class="dd">description:<br />
                 "It stands at an elevation of 3,776 meters, making it the highest mountain in Japan. 
                 Straddling Shizuoka and Yamanashi prefectures, 
                 it is considered a symbol of Japan for its beautiful appearance."</dd>
+                <hr>
+                <dd class="dd">history:<br />
+                Mount Fuji is Japan’s highest and most iconic mountain, standing at 3,776 meters. 
+                It is a stratovolcano that last erupted in 1707-1708. 
+                Mount Fuji has been sacred in Japanese culture for centuries, inspiring Shinto and Buddhist practices, art, and literature. 
+                During the Edo period (17th-19th centuries), climbing Fuji became a popular pilgrimage. 
+                Today, Mount Fuji is a UNESCO World Heritage site, 
+                a symbol of Japan, and a major destination for climbers and tourists worldwide.
+                </dd>
             </dl>
             <br>
         <hr />
-
+        <p class="dt">From here, I’ll show you some of the foods we eat at my house — just a few examples!</p>
+        <p class="yajirushi">↓↓</p>
+        <hr>
         <p class="dt">This is tonkotsu ramen made from instant noodles.</p>
-        <img class="image" src="{% static 'css/tonkotsuramen.png' %}" alt="tonkotsuramen"/>
+        <a href="{% url 'cookpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645502/thankjapan/backgrounds/eerlcbkiwnesgz4g5yuw.png" 
+         alt="tonkotsuramen"/></a>
+
         <p class="dt">This is the miso soup we make at home.</p>
-        <img class="image" src="{% static 'css/misoshiru.png' %}" alt="misoshiru"/>
+        <a href="{% url 'cookpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645480/thankjapan/backgrounds/efyejn2fmwas2ogvdip4.png"
+         alt="misoshiru"/></a>
+
         <p class="dt">This is natto on rice.</p>
-        <img class="image" src="{% static 'css/nattougohan.png' %}" alt="nattougohan"/>
+        <a href="{% url 'cookpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645548/thankjapan/backgrounds/a6oisaruk463hbfywpl9.png"
+         alt="nattougohan"/></a>
+
         <p class="dt">Every now and then, I have takikomi gohan, but it's pretty rare.</p>
-        <img class="image" src="{% static 'css/takikomigohan.png' %}" alt="takikomigohan"/>
+        <a href="{% url 'cookpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645533/thankjapan/backgrounds/gkyce0htgx1rrh9tbaun.png"
+         alt="takikomigohan"/></a>
+
         <p class="dt">These are tri-colored dumplings made from deep-fried shrimp paste.</p>
-        <img class="image" src="{% static 'css/sanshokudango.png' %}" alt="sanshokudango"/>
+        <a href="{% url 'foodpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645575/thankjapan/backgrounds/ifqqmdqedadu4vg8ilgw.png"
+         alt="sanshokudango"/></a>
 
         <p class="dt">This is Kashiwa Mochi, a traditional Japanese sweet eaten in May.</p>
-        <img class="image" src="{% static 'css/kashiwa.png' %}" alt="kashiwamochi"/>
+        <a href="{% url 'foodpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645592/thankjapan/backgrounds/ldhlg7gelekxhnvh8srr.png"
+         alt="kashiwamochi"/></a>
+
         <p class="dt">This is grilled salmon.</p>
-        <img class="image" src="{% static 'css/yakishake.png' %}" alt="yakisake" />
+        <a href="{% url 'foodpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645644/thankjapan/backgrounds/s7qflkaitfrusrsjkoxa.png"
+         alt="yakisake" /></a>
+
         <p class="dt">Hiyashi Chuka is a type of cold ramen eaten in the summer.</p>
-        <img class="image" src="{% static 'css/hiyashichuka.png' %}" alt="hiyashichuka" />
+        <a href="{% url 'cookpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645614/thankjapan/backgrounds/xod0qhqztcnflvwk5j2s.png"
+         alt="hiyashichuka" /></a>
         <p class="dt">Katsuo no Tataki is one type of Japanese sashimi, featuring lightly seared skipjack tuna.</p>
-        <img class="image" src="{% static 'css/katsuonotataki.png' %}" alt="katsuonotataki" />
+        <a href="{% url 'foodpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645624/thankjapan/backgrounds/ul34siwlrmvimtmyiyx7.png"
+         alt="katsuonotataki" /></a>
 
         
 

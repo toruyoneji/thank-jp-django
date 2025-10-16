@@ -1,5 +1,5 @@
 {% extends 'basecategory.html' %}
-{% block title %}Animal{% endblock %}
+{% block title %}Japanese Animals List | Wildlife & Native Species in Japan | ThankJapan{% endblock %}
 
 {% block content %}
 
@@ -7,10 +7,18 @@
     <div class="main2">
     
         {% for item in object_list %}
+
+            {% if item.image %}
                                            
                 <a href="{% url 'detail' item.id %}">
-                    <img class="gazou" src="{{ item.image.url }}" alt="No image..." />
+                    <img class="gazou" src="{{ item.image.url }}" alt="{{ item.englishname }}" />
                 </a>
+
+            {% else %}
+
+                <p>No image available</p>
+
+            {% endif %}
           
         {% endfor %}
        

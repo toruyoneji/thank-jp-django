@@ -1,19 +1,35 @@
 {% extends 'basecategory.html' %}
-{% block title %}{{ object.category }}{% endblock %}
+
+{% block title %}{{ object.englishname }} - Meaning, History & Cultural Significance in Japan{% endblock %}
+
+{% block description %}Discover the meaning, history, and cultural background of {{ object.englishname }} ({{ object.jpname }}) in Japanese culture.{% endblock %}
+
 
 {% block content %}
 
     {% load static %}
     <div class="main2">
-        <img class="detailgazou" src="{{ object.image.url }}" alt="detailImage" />
-            <dl>
-                <dt class="detaildt">Name: {{ object.name }}</dt>
+        {% if object.image and object.image.url %}
+            <img class="detailgazou" src="{{ object.image.url }}" alt="{{ object.englishname }} image" />
+        {% else %}
+            <p>No image available</p>
+        {% endif %}
+            <h1 class="detaildt">{{object.englishname }}</h1> 
+            <hr>
+            <h2>japanese Name:</h2> <p class="detaildt">{{ object.jpname }}</p>
+            <hr>
+            <h2>Romaji name:</h2> <p class="detaildt">{{ object.name }}</p>
                 <hr>
-                <dd class="detaildd">description:<br />
-                <hr>
+                <p class="detaildd">description<br />
+                    ↓↓<br />
                     {{ object.description }}
-                </dd>
-            </dl>
+                </p>
+                <hr>
+                <p class="detaildd">history<br />
+                    ↓↓<br />
+                    {{ object.history}}
+                </p>
+            
     </div>
 
  
