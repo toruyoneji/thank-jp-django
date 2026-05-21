@@ -1,0 +1,168 @@
+{% extends 'base/base_pt.html' %}
+{% block content %}
+
+<style>
+    .settings-page { margin-top: 150px; padding: 40px 20px; font-family: 'Zen Antique', serif; }
+    .settings-card { max-width: 550px; margin: 0 auto; padding: 40px; border-radius: 12px; transition: all 0.8s ease; text-align: center; position: relative; overflow: hidden; }
+
+    .card-paper { background: #ffffff !important; border: 2px solid #ddd !important; box-shadow: 0 5px 15px rgba(0,0,0,0.05) !important; }
+
+    .card-wood { background-color: #fff9f0 !important; border: 10px solid #5d4037 !important; box-shadow: inset 0 0 20px rgba(0,0,0,0.1), 0 10px 25px rgba(0,0,0,0.2) !important; }
+
+    .card-silver { background: linear-gradient(135deg, #ffffff, #e6e9ea, #bdc3c7) !important; border: 6px solid #dcdde1 !important; box-shadow: 0 0 0 2px #bdc3c7, 0 15px 35px rgba(149,165,166,0.15) !important; position: relative; }
+    .card-silver::after { content: ""; position: absolute; top: -100%; left: -100%; width: 50%; height: 300%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent); transform: rotate(45deg); animation: silver-sheen 6s infinite; pointer-events: none; }
+    @keyframes silver-sheen { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
+
+    .card-gold { background: #ffffff !important; border: 8px solid transparent !important; background-clip: padding-box !important; border-image: linear-gradient(135deg, #fff1b8, #ffd700, #d4af37, #f1c40f) 1 !important; box-shadow: 0 20px 50px rgba(212, 175, 55, 0.4) !important; }
+    .card-gold::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent 45%, rgba(255,215,0,0.2) 50%, transparent 55%); animation: shine 4s infinite; transform: rotate(30deg); pointer-events: none; }
+    @keyframes shine { 0% { left: -100%; } 100% { left: 100%; } }
+
+    .card-platinum { background: linear-gradient(135deg, #f0f4f8 0%, #e6eef8 50%, #f0f4f8 100%) !important; border: 6px solid #b8c6db !important; box-shadow: 0 15px 45px rgba(173, 181, 189, 0.4), inset 0 0 30px rgba(255, 255, 255, 0.8) !important; }
+    .card-platinum::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(circle, #fff 1.5px, transparent 1.5px), radial-gradient(circle, rgba(135, 206, 250, 0.8) 1px, transparent 1px), radial-gradient(circle, rgba(255, 182, 193, 0.5) 1px, transparent 1px); background-size: 80px 80px, 110px 110px, 150px 150px; background-position: 0 0, 40px 60px, 90px 20px; animation: diamond-pulse 4s infinite alternate; opacity: 1; pointer-events: none; }
+    .card-platinum::after { content: ""; position: absolute; top: -100%; left: -100%; width: 300%; height: 300%; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.4) 45%, rgba(135,206,250,0.2) 50%, transparent 55%); transform: rotate(25deg); animation: prism-flow 7s infinite linear; pointer-events: none; }
+    @keyframes diamond-pulse { 0% { opacity: 0.4; filter: brightness(1) drop-shadow(0 0 2px #fff); } 100% { opacity: 1; filter: brightness(1.2) drop-shadow(0 0 8px #fff); } }
+    @keyframes prism-flow { 0% { transform: translate(-30%, -30%) rotate(25deg); } 100% { transform: translate(10%, 10%) rotate(25deg); } }
+
+    .card-shogun { background: #1a1a1a !important; color: #f1c40f !important; border: 10px double #d4af37 !important; box-shadow: 0 0 50px rgba(212, 175, 55, 0.5), inset 0 0 30px rgba(212, 175, 55, 0.2) !important; }
+    .card-shogun h2, .card-shogun p { color: #f1c40f !important; }
+    .card-shogun .stats-container { background: rgba(212, 175, 55, 0.1) !important; border: 1px solid #f1c40f !important; }
+
+    .stats-container { background: #fdfaf0; border: 1px solid #d4af37; border-radius: 10px; padding: 15px; margin: 20px 0; display: flex; justify-content: space-around; }
+    .stat-value { font-size: 1.4rem; font-weight: bold; color: #b22d35; display: block; }
+    .stat-label { font-size: 0.8rem; color: #777; }
+    .status-badge { display: inline-block; padding: 5px 15px; border-radius: 25px; font-weight: bold; margin-top: 10px; font-size: 0.9rem; }
+    .status-free { background: #eee; color: #666; }
+    .status-premium { background: linear-gradient(135deg, #d4af37, #ffd700); color: #000; border: 1px solid #ffeb99; }
+
+    .action-group { display: flex; flex-direction: row; justify-content: center; gap: 15px; margin-top: 30px; flex-wrap: wrap; align-items: center; }
+    .action-group form { display: contents; }
+
+    .btn-manage { display: inline-block; padding: 12px 25px; border-radius: 30px; text-decoration: none; font-weight: bold; transition: 0.3s; border: none; cursor: pointer; font-size: 0.95rem; text-align: center; min-width: 220px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .btn-upgrade { background: #f1c40f; color: #000; }
+    .btn-downgrade { background: white; color: #b22d35; border: 2px solid #b22d35; }
+    .btn-delete { background: #b22d35; color: white; }
+
+    .rank-progress-container {
+    background: #1a1a1a;
+    border: 1px solid #d4af37; 
+    padding: 20px;
+    border-radius: 15px;
+    margin: 20px 0;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+    text-align: center;
+    }
+
+
+    .pts-highlight {
+    font-size: 1.2rem;
+    color: #00e5ff;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(0, 229, 255, 0.5);
+    }
+
+
+    @media screen and (max-width: 600px) {
+        .action-group { flex-direction: column; width: 100%; }
+        .btn-manage { width: 100%; min-width: unset; }
+    }
+</style>
+
+<div class="settings-page">
+    <div class="settings-card 
+        {% if total_score < 50 %} card-paper
+        {% elif total_score < 100 %} card-wood
+        {% elif total_score < 200 %} card-silver
+        {% elif total_score < 500 %} card-gold
+        {% elif total_score < 1000 %} card-platinum
+        {% else %} card-shogun
+        {% endif %}">
+
+        <h2>Definições da Conta</h2>
+        
+        <p style="font-size: 1.2rem; margin-bottom: 10px;">
+            <strong>{{ user.username }}</strong>
+            <span style="font-size: 1rem; color: #000; margin-left: 10px; font-weight: bold;">
+                (Rank: 
+                {% with s=total_score %}
+                    {% if s >= 2000 %}🗾 伝説 (Legend)
+                    {% elif s >= 1200 %}👑 大将軍 (General)
+                    {% elif s >= 900 %}🐎 将軍 (Shogun)
+                    {% elif s >= 650 %}🏯 大名 (Daimyo)
+                    {% elif s >= 450 %}🚩 旗本 (Hatamoto)
+                    {% elif s >= 300 %}⚔️ 侍 (Samurai)
+                    {% elif s >= 200 %}🥷 忍者 (Ninja)
+                    {% elif s >= 100 %}🚣 浪人 (Ronin)
+                    {% elif s >= 50 %}🎒 旅人 (Traveler)
+                    {% else %}🌾 村人 (Villager)
+                    {% endif %}
+                {% endwith %})
+            </span>
+        </p>
+
+        <div class="rank-progress-container">
+        {% if pts_to_next > 0 %}
+            <div style="margin-bottom: 8px; color: #fff; font-size: 1rem;">
+                Faltam <span class="pts-highlight">{{ pts_to_next }}</span> pt para o próximo nível
+            </div>
+            <div style="font-size: 0.8rem; color: #aaa; margin-top: 5px;">
+                Progresso atual: {{ progress_percent|floatformat:0 }}%
+            </div>
+        {% else %}
+            <div style="color: #d4af37; font-size: 1.2rem; font-weight: bold;">
+                👑 Atingiste o nível máximo «Lenda»! 🎉
+            </div>
+        {% endif %}
+        </div>
+        
+        {% if user.profile.is_premium %}
+            <span class="status-badge status-premium">Membro Premium 💎</span>
+        {% else %}
+            <span class="status-badge status-free">Plano Gratuito</span>
+        {% endif %}
+        <div class="stats-container">
+            <span class="stat-label">PONTUAÇÃO TOTAL</span>
+            <span class="stat-value">{{ total_score }}</span>
+        </div>
+
+        <div class="stats-container" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <span class="stat-label">RANKING MUNDIAL</span>
+            <span class="stat-value" style="color: #00bcd4;">
+                #{{ current_rank }} <span style="font-size: 0.8em; color: #888; font-weight: normal;">/ {{ total_registered }}</span>
+                <span style="font-size: 0.7em; margin-left: 3px; font-weight: normal; color: #888;">º</span>
+            </span>
+        </div>
+
+        <div class="action-group">
+            {% if not user.profile.is_premium %}
+                <a href="{% url 'premium_infopt' %}" class="btn-manage btn-upgrade">Actualizar para Premium 💎</a>
+            {% else %}
+                <form action="{% url 'downgrade_premium' %}" method="POST" onsubmit="return confirm('Mudar para Plano Gratuito?')">
+                    {% csrf_token %}
+                    <input type="hidden" name="downgrade_url_name" value="downgrade_successpt">
+                    <button type="submit" class="btn-manage btn-downgrade">Cancelar assinatura Premium</button>
+                </form>
+            {% endif %}
+            <form action="{% url 'delete_account' %}" method="POST" onsubmit="return confirm('PERIGO: Eliminar a conta e todos os dados permanentemente?')">
+                {% csrf_token %}
+                <input type="hidden" name="success_url_name" value="delete_successpt">
+                <button type="submit" class="btn-manage btn-delete">Eliminar a Minha Conta Permanentemente</button>
+            </form>
+        </div>
+        <div style="margin-top: 30px;">
+            <a href="javascript:void(0);" onclick="smartBack()" style="color: #5d5245; text-decoration: none; font-weight: bold;">
+                {% if request.GET.from == 'result' %}← Voltar aos resultados{% else %}← Voltar{% endif %}
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function smartBack() {
+    if (document.referrer && document.referrer.includes(window.location.hostname)) {
+        history.back();
+    } else {
+        window.location.href = "{% url 'toppagept' %}";
+    }
+}
+</script>
+{% endblock %}

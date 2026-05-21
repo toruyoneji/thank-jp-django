@@ -1,23 +1,248 @@
 from django.urls import path
-from .views import (TopView, KiyakuView, FoodView, NatureView, FashionView, 
+from django.contrib.auth import views as auth_views
+from django.views.generic import RedirectView
+from .views import (TopView, TopViewFR, TopViewIT, TopViewPT, TopViewZHHANT,TopViewKO, TopViewESES, TopViewZHCN,
+                    TopViewDE, TopViewTH, TopViewPTBR, TopViewESMX, TopViewENIN, TopViewJA, TopViewVI, account_settings_redirect,
+                    FoodView, NatureView, FashionView, 
                     CultureView, CookView, AppliancesView, AnimalView,
-                    ImgDetailView, BuildingView, FlowerView, HouseholdItemsView,
-                    SportsView, WorkView, CompanyFormView, game_start, game_play,
-                    game_answer, game_result, game_restart, logout_player, 
-                    delete_player, LegalNoticeView,PrivacyPolicy, contact_view, contact_thanks)
+                    CategoryDetailView, BuildingView, FlowerView, HouseholdItemsView,LiveView,
+                    SportsView, WorkView, BodyView, DailyactionsView, game_start, game_play, game_next_question,
+                    game_answer, game_result, game_restart, player_login, player_logout, delete_player_confirm,
+                    player_register, delete_player,  contact_view, contact_thanks, category_list, category_list_zhhant, category_list_zhcn,
+                    category_list_vi, category_list_th, category_list_pt, category_list_pt_br, category_list_ko, 
+                    category_list_ja, category_list_it, category_list_fr, category_list_es_mx, category_list_es_es,
+                    category_list_en_in, category_list_de, DailyConversationView, BusinessJapaneseView, 
+                    LivingInJapanView, MedicalEmergencyView, RealestateRulesView, TourismEtiquetteView, 
+                    PrefectureView, EntertainmentView, SlangView, ImgPremiumDetailView,
+                    JapanFoodView, 
+                    PrefectureListView,IshikawaView, ToyamaView, FukuiView, CompanyFormView, CompanyFormDEView, CompanyFormENINView, CompanyFormESESView,
+                    CompanyFormESMXView, CompanyFormFRView, CompanyFormITView, CompanyFormJAView, CompanyFormKOView,
+                    CompanyFormPTBRView, CompanyFormPTView, CompanyFormTHView, CompanyFormVIView, CompanyFormZHHANTView, CompanyFormZHCNView, 
+                    LegalNoticeView, LegalNoticeDEView, LegalNoticeENINView, LegalNoticeESESView, LegalNoticeESMXView,
+                    LegalNoticeFRView, LegalNoticeITView, LegalNoticeJAView, LegalNoticeKOView, LegalNoticePTBRView,
+                    LegalNoticePTView, LegalNoticeTHView, LegalNoticeVIView, LegalNoticeZHHANTView, LegalNoticeZHCNView,
+                    KiyakuView, KiyakuDEView, KiyakuENINView, KiyakuESESView, KiyakuESMXView, KiyakuFRView,
+                    KiyakuITView, KiyakuJAView, KiyakuKOView, KiyakuPTBRView, KiyakuPTView, KiyakuTHView,
+                    KiyakuVIView, KiyakuZHHANTView, KiyakuZHCNView,
+                    PrivacyPolicy, PrivacyPolicyDE, PrivacyPolicyENIN, PrivacyPolicyESES, PrivacyPolicyESMX,
+                    PrivacyPolicyFR, PrivacyPolicyIT, PrivacyPolicyJA, PrivacyPolicyKO, PrivacyPolicyPT,
+                    PrivacyPolicyPTBR, PrivacyPolicyTH, PrivacyPolicyVI, PrivacyPolicyZHHANT, PrivacyPolicyZHCN,
+                    update_premium_status, delete_account, downgrade_premium, 
+                    premium_info, premium_infoDE, premium_infoENIN, premium_infoESES, premium_infoESMX,
+                    premium_infoFR, premium_infoIT, premium_infoJA, premium_infoKO, premium_infoPT,
+                    premium_infoPTBR, premium_infoTH, premium_infoVI, premium_infoZHHANT, premium_infoZHCN,
+                    thank_you, thank_youDE, thank_youENIN, thank_youESES, thank_youESMX, thank_youFR,
+                    thank_youIT, thank_youJA, thank_youKO, thank_youPT, thank_youPTBR, thank_youTH,
+                    thank_youVI, thank_youZHHANT, thank_youZHCN,
+                    account_settings, account_settingsDE, account_settingsENIN, account_settingsESES,
+                    account_settingsESMX, account_settingsFR, account_settingsIT, account_settingsJA,
+                    account_settingsKO, account_settingsPT, account_settingsPTBR, account_settingsTH,
+                    account_settingsVI, account_settingsZHHANT, account_settingsZHCN,
+                    delete_success, delete_successDE, delete_successENIN, delete_successESES, delete_successZHCN,
+                    delete_successESMX, delete_successFR, delete_successIT, delete_successJA, delete_successKO,
+                    delete_successPT, delete_successPTBR, delete_successTH, delete_successVI, delete_successZHHANT,
+                    downgrade_success, downgrade_successDE, downgrade_successENIN, downgrade_successESES,
+                    downgrade_successESMX, downgrade_successFR, downgrade_successIT, downgrade_successJA, downgrade_successZHCN,
+                    downgrade_successKO, downgrade_successPT, downgrade_successPTBR, downgrade_successTH,
+                    downgrade_successVI, downgrade_successZHHANT, update_policy_agreement, paypal_webhook,
+                    CustomPasswordResetView) 
 
 
 urlpatterns = [
     #top page
     path("", TopView.as_view(), name="toppage"),
+    path("ja/", TopViewJA.as_view(), name="toppageja"),
+    path("vi/", TopViewVI.as_view(), name="toppagevi"),
+    path('fr/', TopViewFR.as_view(), name='toppagefr'),
+    path('it/', TopViewIT.as_view(), name='toppageit'),
+    path('pt/', TopViewPT.as_view(), name='toppagept'),
+    path('zh-hant/', TopViewZHHANT.as_view(), name='toppagezhHANT'),
+    path('zh-cn/', TopViewZHCN.as_view(), name='toppagezhCN'),
+    path('ko/', TopViewKO.as_view(), name='toppageko'),
+    path('es-es/', TopViewESES.as_view(), name='toppageesES'),
+    path('de/', TopViewDE.as_view(), name='toppagede'),
+    path('th/', TopViewTH.as_view(), name='toppageth'),
+    path('pt-br/', TopViewPTBR.as_view(), name='toppageptBR'),
+    path('es-mx/', TopViewESMX.as_view(), name='toppageesMX'),
+    path('en-in/', TopViewENIN.as_view(), name='toppageenIN'),
+    
+    path('account/settings-redirect/', account_settings_redirect, name='account_settings_redirect'),
+    
+    #premium
+    path('premium/', premium_info, name='premium_info'),
+    path('premium/de/', premium_infoDE, name='premium_infode'),
+    path('premium/en-in/', premium_infoENIN, name='premium_infoenIN'),
+    path('premium/es-es/', premium_infoESES, name='premium_infoesES'),
+    path('premium/es-mx/', premium_infoESMX, name='premium_infoesMX'),
+    path('premium/fr/', premium_infoFR, name='premium_infofr'),
+    path('premium/it/', premium_infoIT, name='premium_infoit'),
+    path('premium/ja/', premium_infoJA, name='premium_infoja'),
+    path('premium/ko/', premium_infoKO, name='premium_infoko'),
+    path('premium/pt-br/', premium_infoPTBR, name='premium_infoptBR'),
+    path('premium/pt/', premium_infoPT, name='premium_infopt'),
+    path('premium/th/', premium_infoTH, name='premium_infoth'),
+    path('premium/vi/', premium_infoVI, name='premium_infovi'),
+    path('premium/zh-hant/', premium_infoZHHANT, name='premium_infozhHANT'),
+    path('premium/zh-cn/', premium_infoZHCN, name='premium_infozhCN'),
+    
+    
+    #support->premiuminfo
+    path('support/', RedirectView.as_view(pattern_name='premium_info', permanent=True)),
+    path('support/ja/', RedirectView.as_view(pattern_name='premium_infoja', permanent=True)),
+    path('support/de/', RedirectView.as_view(pattern_name='premium_infode', permanent=True)),
+    path('support/en-in/', RedirectView.as_view(pattern_name='premium_infoenIN', permanent=True)),
+    path('support/es-es/', RedirectView.as_view(pattern_name='premium_infoesES', permanent=True)),
+    path('support/es-mx/', RedirectView.as_view(pattern_name='premium_infoesMX', permanent=True)),
+    path('support/fr/', RedirectView.as_view(pattern_name='premium_infofr', permanent=True)),
+    path('support/it/', RedirectView.as_view(pattern_name='premium_infoit', permanent=True)),
+    path('support/ko/', RedirectView.as_view(pattern_name='premium_infoko', permanent=True)),
+    path('support/pt-br/', RedirectView.as_view(pattern_name='premium_infoptBR', permanent=True)),
+    path('support/pt/', RedirectView.as_view(pattern_name='premium_infopt', permanent=True)),
+    path('support/th/', RedirectView.as_view(pattern_name='premium_infoth', permanent=True)),
+    path('support/vi/', RedirectView.as_view(pattern_name='premium_infovi', permanent=True)),
+    path('support/zh-hant/', RedirectView.as_view(pattern_name='premium_infozhHANT', permanent=True)),
+    
+    
+    #thankyou
+    path('thank-you/', thank_you, name='thank_you'),
+    path('thank-you/de/', thank_youDE, name='thank_youde'),
+    path('thank-you/en-in/', thank_youENIN, name='thank_youenIN'),
+    path('thank-you/es-es/', thank_youESES, name='thank_youesES'),
+    path('thank-you/es-mx/', thank_youESMX, name='thank_youesMX'),
+    path('thank-you/fr/', thank_youFR, name='thank_youfr'),
+    path('thank-you/it/', thank_youIT, name='thank_youit'),
+    path('thank-you/ja/', thank_youJA, name='thank_youja'),
+    path('thank-you/ko/', thank_youKO, name='thank_youko'),
+    path('thank-you/pt-br/', thank_youPTBR, name='thank_youptBR'),
+    path('thank-you/pt/', thank_youPT, name='thank_youpt'),
+    path('thank-you/th/', thank_youTH, name='thank_youth'),
+    path('thank-you/vi/', thank_youVI, name='thank_youvi'),
+    path('thank-you/zh-hant/', thank_youZHHANT, name='thank_youzhHANT'),
+    path('thank-you/zh-cn/', thank_youZHCN, name='thank_youzhCN'),
+    
+    #account-settings
+    path('account/settings/', account_settings, name='account_settings'),
+    path('account/settings/de/', account_settingsDE, name='account_settingsde'),
+    path('account/settings/en-in/', account_settingsENIN, name='account_settingsenIN'),
+    path('account/settings/es-es/', account_settingsESES, name='account_settingsesES'),
+    path('account/settings/es-mx/', account_settingsESMX, name='account_settingsesMX'),
+    path('account/settings/fr/', account_settingsFR, name='account_settingsfr'),
+    path('account/settings/it/', account_settingsIT, name='account_settingsit'),
+    path('account/settings/ja/', account_settingsJA, name='account_settingsja'),
+    path('account/settings/ko/', account_settingsKO, name='account_settingsko'),
+    path('account/settings/pt-br/', account_settingsPTBR, name='account_settingsptBR'),
+    path('account/settings/pt/', account_settingsPT, name='account_settingspt'),
+    path('account/settings/th/', account_settingsTH, name='account_settingsth'),
+    path('account/settings/vi/', account_settingsVI, name='account_settingsvi'),
+    path('account/settings/zh-hant/', account_settingsZHHANT, name='account_settingszhHANT'),
+    path('account/settings/zh-cn/', account_settingsZHCN, name='account_settingszhCN'),
+    
+    #delete-success
+    path('account/delete-success/', delete_success, name='delete_success'),
+    path('account/delete-success/de/', delete_successDE, name='delete_successde'),
+    path('account/delete-success/en-in/', delete_successENIN, name='delete_successenIN'),
+    path('account/delete-success/es-es/', delete_successESES, name='delete_successesES'),
+    path('account/delete-success/es-mx/', delete_successESMX, name='delete_successesMX'),
+    path('account/delete-success/fr/', delete_successFR, name='delete_successfr'),
+    path('account/delete-success/it/', delete_successIT, name='delete_successit'),
+    path('account/delete-success/ja/', delete_successJA, name='delete_successja'),
+    path('account/delete-success/ko/', delete_successKO, name='delete_successko'),
+    path('account/delete-success/pt-br/', delete_successPTBR, name='delete_successptBR'),
+    path('account/delete-success/pt/', delete_successPT, name='delete_successpt'),
+    path('account/delete-success/th/', delete_successTH, name='delete_successth'),
+    path('account/delete-success/vi/', delete_successVI, name='delete_successvi'),
+    path('account/delete-success/zh-hant/', delete_successZHHANT, name='delete_successzhHANT'),
+    path('account/delete-success/zh-cn/', delete_successZHCN, name='delete_successzhCN'),
+    
+    #downgrade
+    path('account/downgrade-success/', downgrade_success, name='downgrade_success'),
+    path('account/downgrade-success/de/', downgrade_successDE, name='downgrade_successde'),
+    path('account/downgrade-success/en-in/', downgrade_successENIN, name='downgrade_successenIN'),
+    path('account/downgrade-success/es-es/', downgrade_successESES, name='downgrade_successesES'),
+    path('account/downgrade-success/es-mx/', downgrade_successESMX, name='downgrade_successesMX'),
+    path('account/downgrade-success/fr/', downgrade_successFR, name='downgrade_successfr'),
+    path('account/downgrade-success/it/', downgrade_successIT, name='downgrade_successit'),
+    path('account/downgrade-success/ja/', downgrade_successJA, name='downgrade_successja'),
+    path('account/downgrade-success/ko/', downgrade_successKO, name='downgrade_successko'),
+    path('account/downgrade-success/pt-br/', downgrade_successPTBR, name='downgrade_successptbr'),
+    path('account/downgrade-success/pt/', downgrade_successPT, name='downgrade_successpt'),
+    path('account/downgrade-success/th/', downgrade_successTH, name='downgrade_successth'),
+    path('account/downgrade-success/vi/', downgrade_successVI, name='downgrade_successvi'),
+    path('account/downgrade-success/zh-hant/', downgrade_successZHHANT, name='downgrade_successzhHANT'),
+    path('account/downgrade-success/zh-cn/', downgrade_successZHCN, name='downgrade_successzhCN'),
+    
+    
+    #premium-status
+    path('update-premium-status/', update_premium_status, name='update_premium_status'),
+    path('paypal/webhook/', paypal_webhook, name='paypal_webhook'),
+    path('account/downgrade/', downgrade_premium, name='downgrade_premium'),
+    path('account/delete/', delete_account, name='delete_account'),
+    
+    
+    
+    #premium-category
+    
+    path('dailyconversation/', DailyConversationView.as_view(), name='dailyconversation'),
+    path('businessjapanese/', BusinessJapaneseView.as_view(), name='businessjapanese'),
+    path('livinginjapan/', LivingInJapanView.as_view(), name='living_in_japan_page'),
+    path('medicalemergency/', MedicalEmergencyView.as_view(), name='medical_emergency'),
+    path('realestaterules/', RealestateRulesView.as_view(), name='real_estate_rules'),
+    path('tourismetiquette/', TourismEtiquetteView.as_view(), name='tourism_etiquette'),
+    path('prefectures/', PrefectureView.as_view(), name='prefectures'),
+    path('entertainment/', EntertainmentView.as_view(), name='entertainment'),
+    path('slang/', SlangView.as_view(), name='slang'),
+    
+    
+    #japanfood
+    path('japanfood/', JapanFoodView.as_view(), name='japanfood'),
+    path('japanfood/<str:lang_code>/', JapanFoodView.as_view(), name='japanfood_with_lang'),
+    
+    
+    #prefecture
+    path('japanculture/ishikawa/', IshikawaView.as_view(), name='ishikawa'),
+    path('japanculture/ishikawa/<str:lang_code>/', IshikawaView.as_view(), name='ishikawa_with_lang'),
+    
+    path('japanculture/toyama/', ToyamaView.as_view(), name='toyama'),
+    path('japanculture/toyama/<str:lang_code>/', ToyamaView.as_view(), name='toyama_with_lang'),
+    
+    path('japanculture/fukui/', FukuiView.as_view(), name='fukui'),
+    path('japanculture/fukui/<str:lang_code>/', FukuiView.as_view(), name='fukui_with_lang'),
+    
+    #culture
+    path('japanculture/', PrefectureListView.as_view(), name='prefecture_list'),
+    path('japanculture/<str:lang_code>/', PrefectureListView.as_view(), name='prefecture_list_with_lang'),
+    
+    
     #game
     path('game/start/', game_start, name='game_start'),
     path('game/play/', game_play, name='game_play'),
     path('game/answer/<int:pk>/', game_answer, name='game_answer'),
+    path('game/next/', game_next_question, name='game_next_question'),
     path('game/result/', game_result, name='game_result'),
     path('game/restart/', game_restart, name='game_restart'),
-    path('logout/', logout_player, name='logout_player'),
-    path('player/delete/', delete_player, name='delete_player'),
+    path('logout/', player_logout, name='player_logout'),
+    path('player/delete/confirm', delete_player, name='delete_player'),
+    path('player/delete/', delete_player_confirm, name='delete_player_confirm'),
+    path('register/', player_register, name='player_register'),
+    path('login/', player_login, name='player_login'),
+    
+    #category select page
+    path("categories/", category_list, name="category_list"),
+    path("categories/zh-hant/", category_list_zhhant, name="category_list_zhHant"),
+    path("categories/zh-cn/", category_list_zhcn, name="category_list_zhCN"),
+    path("categories/vi/", category_list_vi, name="category_list_vi"),
+    path("categories/th/", category_list_th, name="category_list_th"),
+    path("categories/pt/", category_list_pt, name="category_list_pt"),
+    path("categories/pt-br/", category_list_pt_br, name="category_list_ptBR"),
+    path("categories/ko/", category_list_ko, name="category_list_ko"),
+    path("categories/ja/", category_list_ja, name="category_list_ja"),
+    path("categories/it/", category_list_it, name="category_list_it"),
+    path("categories/fr/", category_list_fr, name="category_list_fr"),
+    path("categories/es-mx/", category_list_es_mx, name="category_list_esMX"),
+    path("categories/es-es/", category_list_es_es, name="category_list_esES"),
+    path("categories/en-in/", category_list_en_in, name="category_list_enIN"),
+    path("categories/de/", category_list_de, name="category_list_de"),
+    
     
     #category list page
     path("food/", FoodView.as_view(), name="foodpage"),
@@ -32,14 +257,116 @@ urlpatterns = [
     path("householditems/", HouseholdItemsView.as_view(), name="householditemspage"),
     path("sports/", SportsView.as_view(), name="sportspage"),
     path("work/", WorkView.as_view(), name="workpage"),
+    path("live/", LiveView.as_view(), name="livepage"),
+    path("body/", BodyView.as_view(), name="bodypage"),
+    path("dailyactions/", DailyactionsView.as_view(), name="dailyactionspage"),
+    
+    #redirect
+    path('appliances/dvd-player-dvd-dekki/', 
+         RedirectView.as_view(url='/appliances/dvd-player-diibuibiidekki/', permanent=True)),
+    
+    path('sports/ice-hockey-aisuhokkei/', 
+         RedirectView.as_view(url='/sports/ice-hockey-aisuhokkee/', permanent=True)),
 
-    #user look page
-    path("detail/<int:pk>/", ImgDetailView.as_view(), name="detail"),
+
+    #riyoukiyaku page
     path("riyoukiyaku/", KiyakuView.as_view(), name="riyoukiyaku"),
+    path("riyoukiyaku/de/", KiyakuDEView.as_view(), name="riyoukiyakude"),
+    path("riyoukiyaku/en-in/", KiyakuENINView.as_view(), name="riyoukiyakuenIN"),
+    path("riyoukiyaku/es-es/", KiyakuESESView.as_view(), name="riyoukiyakuesES"),
+    path("riyoukiyaku/es-mx/", KiyakuESMXView.as_view(), name="riyoukiyakuesMX"),
+    path("riyoukiyaku/fr/", KiyakuFRView.as_view(), name="riyoukiyakufr"),
+    path("riyoukiyaku/it/", KiyakuITView.as_view(), name="riyoukiyakuit"),
+    path("riyoukiyaku/ja/", KiyakuJAView.as_view(), name="riyoukiyakuja"),
+    path("riyoukiyaku/ko/", KiyakuKOView.as_view(), name="riyoukiyakuko"),
+    path("riyoukiyaku/pt-br/", KiyakuPTBRView.as_view(), name="riyoukiyakuptBR"),
+    path("riyoukiyaku/pt/", KiyakuPTView.as_view(), name="riyoukiyakupt"),
+    path("riyoukiyaku/th/", KiyakuTHView.as_view(), name="riyoukiyakuth"),
+    path("riyoukiyaku/vi/", KiyakuVIView.as_view(), name="riyoukiyakuvi"),
+    path("riyoukiyaku/zh-hant/", KiyakuZHHANTView.as_view(), name="riyoukiyakuzhHANT"),
+    path("riyoukiyaku/zh-cn/", KiyakuZHCNView.as_view(), name="riyoukiyakuzhCN"),
+    
+    #infomation
     path("infomation/", CompanyFormView.as_view(), name="infomationpage"),
+    path("infomation/de/", CompanyFormDEView.as_view(), name="infomationpagede"),
+    path("infomation/en-in/", CompanyFormENINView.as_view(), name="infomationpageenIN"),
+    path("infomation/es-es/", CompanyFormESESView.as_view(), name="infomationpageesES"),
+    path("infomation/es-mx/", CompanyFormESMXView.as_view(), name="infomationpageesMX"),
+    path("infomation/fr/", CompanyFormFRView.as_view(), name="infomationpagefr"),
+    path("infomation/it/", CompanyFormITView.as_view(), name="infomationpageit"),
+    path("infomation/ja/", CompanyFormJAView.as_view(), name="infomationpageja"),
+    path("infomation/ko/", CompanyFormKOView.as_view(), name="infomationpageko"),
+    path("infomation/pt-br/", CompanyFormPTBRView.as_view(), name="infomationpageptBR"),
+    path("infomation/pt/", CompanyFormPTView.as_view(), name="infomationpagept"),
+    path("infomation/th/", CompanyFormTHView.as_view(), name="infomationpageth"),
+    path("infomation/vi/", CompanyFormVIView.as_view(), name="infomationpagevi"),
+    path("infomation/zh-hant/", CompanyFormZHHANTView.as_view(), name="infomationpagezhHANT"),
+    path("infomation/zh-cn/", CompanyFormZHCNView.as_view(), name="infomationpagezhCN"),
+    
+    
+    #legalnotice
+    path('legal-notice/', LegalNoticeView.as_view(), name='legal_notice'),
+    path('legal-notice/de/', LegalNoticeDEView.as_view(), name='legal_noticede'),
+    path('legal-notice/en-in/', LegalNoticeENINView.as_view(), name='legal_noticeenIN'),
+    path('legal-notice/es-es/', LegalNoticeESESView.as_view(), name='legal_noticeesES'),
+    path('legal-notice/es-mx/', LegalNoticeESMXView.as_view(), name='legal_noticeesMX'),
+    path('legal-notice/fr/', LegalNoticeFRView.as_view(), name='legal_noticefr'),
+    path('legal-notice/it/', LegalNoticeITView.as_view(), name='legal_noticeit'),
+    path('legal-notice/ja/', LegalNoticeJAView.as_view(), name='legal_noticeja'),
+    path('legal-notice/ko/', LegalNoticeKOView.as_view(), name='legal_noticeko'),
+    path('legal-notice/pt-br/', LegalNoticePTBRView.as_view(), name='legal_noticeptBR'),
+    path('legal-notice/pt/', LegalNoticePTView.as_view(), name='legal_noticept'),
+    path('legal-notice/th/', LegalNoticeTHView.as_view(), name='legal_noticeth'),
+    path('legal-notice/vi/', LegalNoticeVIView.as_view(), name='legal_noticevi'),
+    path('legal-notice/zh-hant/', LegalNoticeZHHANTView.as_view(), name='legal_noticezhHANT'),
+    path('legal-notice/zh-cn/', LegalNoticeZHCNView.as_view(), name='legal_noticezhCN'),
+    
+    #update-privacypolicy
+    path('update-policy-agreement/', update_policy_agreement, name='update_policy_agreement'),
+    
+    #privacypolicy
+    path('privacy-policy/', PrivacyPolicy.as_view(), name="privacy_policy"),
+    path('privacy-policy/de/', PrivacyPolicyDE.as_view(), name="privacy_policyde"),
+    path('privacy-policy/en-in/', PrivacyPolicyENIN.as_view(), name="privacy_policyenIN"),
+    path('privacy-policy/es-es/', PrivacyPolicyESES.as_view(), name="privacy_policyesES"),
+    path('privacy-policy/es-mx/', PrivacyPolicyESMX.as_view(), name="privacy_policyesMX"),
+    path('privacy-policy/fr/', PrivacyPolicyFR.as_view(), name="privacy_policyfr"),
+    path('privacy-policy/it/', PrivacyPolicyIT.as_view(), name="privacy_policyit"),
+    path('privacy-policy/ja/', PrivacyPolicyJA.as_view(), name="privacy_policyja"),
+    path('privacy-policy/ko/', PrivacyPolicyKO.as_view(), name="privacy_policyko"),
+    path('privacy-policy/pt-br/', PrivacyPolicyPTBR.as_view(), name="privacy_policyptBR"),
+    path('privacy-policy/pt/', PrivacyPolicyPT.as_view(), name="privacy_policypt"),
+    path('privacy-policy/th/', PrivacyPolicyTH.as_view(), name="privacy_policyth"),
+    path('privacy-policy/vi/', PrivacyPolicyVI.as_view(), name="privacy_policyvi"),
+    path('privacy-policy/zh-hant/', PrivacyPolicyZHHANT.as_view(), name="privacy_policyzhHANT"),
+    path('privacy-policy/zh-cn/', PrivacyPolicyZHCN.as_view(), name="privacy_policyzhCN"),
+    
+    
+    #contact
     path('contact/', contact_view, name='contact'),
     path('contact/thanks/', contact_thanks, name='contact_thanks'),
     
-    path('legal-notice/', LegalNoticeView.as_view(), name='legal_notice'),
-    path('privacy-policy/', PrivacyPolicy.as_view(), name="privacy_policy"),
+    #password-reset
+    path('password-reset/', 
+         CustomPasswordResetView.as_view(template_name='thank_japan_app/registration/password_reset_form.html',
+                email_template_name='thank_japan_app/registration/password_reset_email.html',
+         extra_email_context={'site_name': 'Thank Japan'}),                              
+         name='password_reset'),
+    
+    path('password-reset/done/', 
+         auth_views.PasswordResetDoneView.as_view(template_name='thank_japan_app/registration/password_reset_done.html'), 
+         name='password_reset_done'),
+    
+    path('password-reset-confirm/<uidb64>/<token>/', 
+         auth_views.PasswordResetConfirmView.as_view(template_name='thank_japan_app/registration/password_reset_confirm.html'), 
+         name='password_reset_confirm'),
+    
+    path('password-reset-complete/', 
+         auth_views.PasswordResetCompleteView.as_view(template_name='thank_japan_app/registration/password_reset_complete.html'), 
+         name='password_reset_complete'),
+    
+    #user look page
+    path('<str:category>/<slug:slug>/', CategoryDetailView.as_view(), name='category_detail'),
+    path('premium-content/<str:category>/<slug:slug>/', ImgPremiumDetailView.as_view(), name='detail_premium'),
+    
 ]

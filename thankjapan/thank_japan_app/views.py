@@ -2,49 +2,689 @@ from django.shortcuts import render, redirect, get_object_or_404, HttpResponse, 
 from django.views import View
 from django.views.generic import ListView, DetailView, FormView, TemplateView
 from django.views.generic.edit import FormView
-from .models import ThankJapanModel, Player
+from .models import ThankJapanModel, Player, Profile, ThankJapanPremium
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from .forms import AnswerForm, ContactForm, UsernameForm
 from django.views.decorators.http import require_POST
-from ratelimit.decorators import ratelimit
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import Http404
+from django.urls import reverse
+from django.utils.safestring import mark_safe
+from django.contrib.auth.models import User
+from django.http import JsonResponse, HttpResponse
+from django.contrib.auth import authenticate, logout, login as auth_login, logout as auth_logout
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from django.utils.http import urlencode
+from django.contrib.auth.views import PasswordResetView
+from .context_processors import language_context
+from .models import WeeklyScore
 import logging
 import random
+import re, itertools
+import json
+import paypalrestsdk
+import requests
+import time
+
 
 logger = logging.getLogger(__name__)
 
 def robots_txt(request):
     content = """User-agent: *
-Disallow: /
-Allow: /$
+
+Disallow: /game/play/
+Disallow: /game/result/
+Disallow: /game/start/
+Disallow: /login/
+Disallow: /register/
+Disallow: /account/
+Disallow: /thank-you/
+
+Sitemap: https://www.thankjapan.com/sitemap.xml
 """
     return HttpResponse(content, content_type="text/plain")
 
-class LegalNoticeView(TemplateView):
-    template_name = "thank_japan_app/legal_notice.html"
+
+def strip_parentheses(text):
+    return re.sub(r'\(.*?\)', '', text).strip()
+
+def extract_base_name(text):
+    return re.sub(r'\(.*?\)', '', text).strip()
+
+def normalize_romaji(text):
+    if not text:
+        return ""
+    text = text.lower().strip()
     
-class PrivacyPolicy(TemplateView):
-    template_name = "thank_japan_app/privacy_policy.html"
-
-class TopView(ListView):
-    template_name = "thank_japan_app/toppage.html"
-    model = ThankJapanModel
-
-class ImgDetailView(DetailView):
-    template_name = "thank_japan_app/thankjapanmodel_detail.html"
-    model = ThankJapanModel
+    text = re.sub(r'[^a-z0-9\-]', '', text)
     
-class KiyakuView(ListView):
-    template_name = "thank_japan_app/riyoukiyaku.html"
-    model = ThankJapanModel
+    text = re.sub(r'(a)\-', r'aa', text)
+    text = re.sub(r'(i)\-', r'ii', text)
+    text = re.sub(r'(u)\-', r'uu', text)
+    text = re.sub(r'(e)\-', r'ee', text)
+    text = re.sub(r'(o)\-', r'oo', text)
+    
+    return text
 
+def normalize_consonants(text):
+    if not text:
+        return ""
+    text = text.lower().strip()
+    text = normalize_romaji(text)
+    
+    replacements = [
+        ('tsu', 'tu'),
+        ('fu', 'hu'),
+        ('shi', 'si'),
+        ('chi', 'ti'),
+        ('ji', 'zi'),
+        ('shu', 'syu'),
+        ('sha', 'sya'),
+        ('sho', 'syo'),
+        ('cho', 'tyo'),
+        ('cha', 'tya'),
+        ('chu', 'tyu'),
+        ('jyu', 'zyu'),
+        ('jya', 'zya'),
+        ('jyo', 'zyo'),
+    ]
+    for old, new in replacements:
+        text = text.replace(old, new)
+
+    return text
+
+def normalize_for_judge(text):
+    if not text:
+        return ""
+
+    text = text.lower().strip()
+
+    text = text.replace('wa', 'ha')
+    text = text.replace('n-', 'nn') 
+    
+    
+    text = re.sub(r'a\-', 'aa', text)
+    text = re.sub(r'i\-', 'ii', text)
+    text = re.sub(r'u\-', 'uu', text)
+    text = re.sub(r'e\-', 'ee', text)
+    text = re.sub(r'o\-', 'oo', text)
+    text = text.replace('ou', 'oo')
+
+
+    text = re.sub(r'[^a-z0-9]', '', text)
+
+    repls = [
+        ('tsu','tu'),('fu','hu'),('shi','si'),('chi','ti'),('ji','zi'),
+        ('sha','sya'),('shu','syu'),('sho','syo'),
+        ('cha','tya'),('chu','tyu'),('cho','tyo'),
+        ('jya','zya'),('jyu','zyu'),('jyo','zyo'),
+        ('sh','sy'),('ch','ty'),('jy','zy')
+    ]
+    for old, new in repls:
+        text = text.replace(old, new)
+
+    text = ''.join(ch for ch, _ in itertools.groupby(text))
+
+    return text
+
+#category: urls:
+CATEGORY_URL_MAP = {
+    'culture': 'culturepage',
+    'food': 'foodpage',
+    'cook': 'cookpage',
+    'fashion': 'fashionpage',
+    'nature': 'naturepage',
+    'animal': 'animalpage',
+    'sports': 'sportspage',
+    'householditems': 'householditemspage',
+    'appliances': 'appliancespage',
+    'building': 'buildingpage',
+    'flower': 'flowerpage',
+    'work': 'workpage',
+    'live': 'livepage',
+    'body': 'bodypage',
+    'dailyactions' : 'dailyactionspage',
+    'DailyConversation': 'dailyconversation',
+    'BusinessJapanese': 'businessjapanese',
+    'LivingInJapan': 'living_in_japan_page',
+    'MedicalEmergency': 'medical_emergency',
+    'RealEstateRules': 'real_estate_rules',
+    'TourismEtiquette': 'tourism_etiquette',
+    'Prefectures': 'prefectures',
+    'Entertainment': 'entertainment',
+    'slang': 'slang',
+}
+
+
+#new-privacy-policy
+
+@login_required
+@require_POST
+def update_policy_agreement(request):
+    profile = request.user.profile
+    profile.privacy_policy_version = "2026-03"
+    profile.save()
+    return JsonResponse({'status': 'success'})
+
+
+#password send
+
+class CustomPasswordResetView(PasswordResetView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        lang_info = language_context(self.request)
+        context['lang_code'] = lang_info['lang_code']
+        return context
+
+    def form_valid(self, form):
+    
+        lang = language_context(self.request)['lang_code']
+            
+        opts = {
+            'use_https': self.request.is_secure(),
+            'token_generator': self.token_generator,
+            'from_email': self.from_email,
+            'email_template_name': self.email_template_name,
+            'subject_template_name': self.subject_template_name,
+            'request': self.request,
+            'html_email_template_name': self.html_email_template_name,
+            'extra_email_context': {'lang_code': lang}, 
+        }
         
+
+        form.save(**opts)
+        
+        return redirect(self.get_success_url())        
+    
 #company infomation
 class CompanyFormView(TemplateView):
-     template_name = 'thank_japan_app/company.html'
+     template_name = 'thank_japan_app/info/company.html'
      
+class CompanyFormZHCNView(TemplateView):
+     template_name = 'thank_japan_app/info/company_zh_cn.html'
+     
+class CompanyFormZHHANTView(TemplateView):
+     template_name = 'thank_japan_app/info/company_zh_hant.html'
+     
+class CompanyFormVIView(TemplateView):
+     template_name = 'thank_japan_app/info/company_vi.html'
+     
+class CompanyFormTHView(TemplateView):
+     template_name = 'thank_japan_app/info/company_th.html'
+     
+class CompanyFormPTView(TemplateView):
+     template_name = 'thank_japan_app/info/company_pt.html'
+     
+class CompanyFormPTBRView(TemplateView):
+     template_name = 'thank_japan_app/info/company_pt_br.html'
+     
+class CompanyFormKOView(TemplateView):
+     template_name = 'thank_japan_app/info/company_ko.html'
+     
+class CompanyFormJAView(TemplateView):
+     template_name = 'thank_japan_app/info/company_ja.html'
+     
+class CompanyFormITView(TemplateView):
+     template_name = 'thank_japan_app/info/company_it.html'
+     
+class CompanyFormFRView(TemplateView):
+     template_name = 'thank_japan_app/info/company_fr.html'
+     
+class CompanyFormESMXView(TemplateView):
+     template_name = 'thank_japan_app/info/company_es_mx.html'
+     
+class CompanyFormESESView(TemplateView):
+     template_name = 'thank_japan_app/info/company_es_es.html'
+     
+class CompanyFormENINView(TemplateView):
+     template_name = 'thank_japan_app/info/company_en_in.html'
+     
+class CompanyFormDEView(TemplateView):
+     template_name = 'thank_japan_app/info/company_de.html'
+     
+#legalnotice
+
+class LegalNoticeView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice.html"
+    
+class LegalNoticeZHCNView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_zh_cn.html"
+     
+class LegalNoticeZHHANTView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_zh_hant.html"
+    
+class LegalNoticeVIView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_vi.html"
+    
+class LegalNoticeTHView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_th.html"
+    
+class LegalNoticePTView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_pt.html"
+    
+class LegalNoticePTBRView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_pt_br.html"
+    
+class LegalNoticeKOView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_ko.html"
+    
+class LegalNoticeJAView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_ja.html"
+    
+class LegalNoticeITView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_it.html"
+    
+class LegalNoticeFRView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_fr.html"
+    
+class LegalNoticeESMXView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_es_mx.html"
+    
+class LegalNoticeESESView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_es_es.html"
+    
+class LegalNoticeENINView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_en_in.html"
+    
+class LegalNoticeDEView(TemplateView):
+    template_name = "thank_japan_app/legal/legal_notice_de.html"
+    
+    
+    
+#privacypolicy    
+class PrivacyPolicy(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy.html"
+    
+class PrivacyPolicyZHCN(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_zh_cn.html"
+    
+class PrivacyPolicyZHHANT(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_zh_hant.html"
+    
+class PrivacyPolicyVI(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_vi.html"
+    
+class PrivacyPolicyTH(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_th.html"
+    
+class PrivacyPolicyPT(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_pt.html"
+    
+class PrivacyPolicyPTBR(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_pt_br.html"
+    
+class PrivacyPolicyKO(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_ko.html"
+    
+class PrivacyPolicyJA(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_ja.html"
+    
+class PrivacyPolicyIT(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_it.html"
+    
+class PrivacyPolicyFR(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_fr.html"
+    
+class PrivacyPolicyESMX(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_es_mx.html"
+    
+class PrivacyPolicyESES(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_es_es.html"
+    
+class PrivacyPolicyENIN(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_en_in.html"
+
+class PrivacyPolicyDE(TemplateView):
+    template_name = "thank_japan_app/privacy/privacy_policy_de.html"
+    
+    
+#riyoukiyaku    
+class KiyakuView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku.html"
+    model = ThankJapanModel
+    
+class KiyakuZHCNView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_zh_cn.html"
+    model = ThankJapanModel
+    
+class KiyakuZHHANTView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_zh_hant.html"
+    model = ThankJapanModel
+    
+class KiyakuVIView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_vi.html"
+    model = ThankJapanModel
+    
+class KiyakuTHView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_th.html"
+    model = ThankJapanModel
+    
+class KiyakuPTView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_pt.html"
+    model = ThankJapanModel
+    
+class KiyakuPTBRView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_pt_br.html"
+    model = ThankJapanModel
+    
+class KiyakuKOView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_ko.html"
+    model = ThankJapanModel
+    
+class KiyakuJAView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_ja.html"
+    model = ThankJapanModel
+    
+class KiyakuITView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_it.html"
+    model = ThankJapanModel
+    
+class KiyakuFRView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_fr.html"
+    model = ThankJapanModel
+    
+class KiyakuESMXView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_es_mx.html"
+    model = ThankJapanModel
+    
+class KiyakuESESView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_es_es.html"
+    model = ThankJapanModel
+
+class KiyakuENINView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_en_in.html"
+    model = ThankJapanModel
+    
+class KiyakuDEView(ListView):
+    template_name = "thank_japan_app/kiyaku/riyoukiyaku_de.html"
+    model = ThankJapanModel
+    
+    
+#login_bonus
+
+
+
+def apply_login_bonus(request):
+    if request.user.is_authenticated:
+        profile = request.user.profile
+        today = timezone.now().date()
+
+        
+        if profile.last_bonus_date != today:
+            
+            profile.total_score += 1
+            profile.last_bonus_date = today
+            profile.save()
+
+            
+            player, created = Player.objects.get_or_create(username=request.user.username)
+            player.total_score = profile.total_score 
+            player.save()
+            
+            
+            request.session['show_bonus_toast'] = True
+    else:
+        request.session['show_guest_bonus_alert'] = True
+            
+
+#country page
+class TopView(ListView): 
+    template_name = "thank_japan_app/toppage/toppage.html"
+    model = ThankJapanModel
+
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'en'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+        
+class TopViewJA(ListView):
+    template_name = "thank_japan_app/toppage/toppage_ja.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'ja'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+class TopViewVI(ListView):
+    template_name = "thank_japan_app/toppage/toppage_vi.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'vi'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+class TopViewFR(ListView):
+    template_name = "thank_japan_app/toppage/toppage_fr.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'fr'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+class TopViewIT(ListView):
+    template_name = "thank_japan_app/toppage/toppage_it.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'it'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+class TopViewPT(ListView):
+    template_name = "thank_japan_app/toppage/toppage_pt.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'pt'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+class TopViewZHCN(ListView):
+    template_name = "thank_japan_app/toppage/toppage_zh_cn.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'zh-cn'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+class TopViewZHHANT(ListView):
+    template_name = "thank_japan_app/toppage/toppage_zh_hant.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'zh-hant'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+class TopViewKO(ListView):
+    template_name = "thank_japan_app/toppage/toppage_ko.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'ko'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+
+class TopViewESES(ListView):
+    template_name = "thank_japan_app/toppage/toppage_es_es.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'es-es'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+class TopViewDE(ListView):
+    template_name = "thank_japan_app/toppage/toppage_de.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'de'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+class TopViewTH(ListView):
+    template_name = "thank_japan_app/toppage/toppage_th.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'th'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+class TopViewPTBR(ListView):
+    template_name = "thank_japan_app/toppage/toppage_pt_br.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'pt-br'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+class TopViewESMX(ListView):
+    template_name = "thank_japan_app/toppage/toppage_es_mx.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'es-mx'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+class TopViewENIN(ListView):
+    template_name = "thank_japan_app/toppage/toppage_en_in.html"
+    model = ThankJapanModel
+    def get(self, request, *args, **kwargs):
+        request.session['user_lang'] = 'en-in'
+        apply_login_bonus(request)
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bonus_received'] = self.request.session.pop('show_bonus_toast', False)
+        context['show_guest_alert'] = self.request.session.pop('show_guest_bonus_alert', False)
+        return context
+    
+    
+    
+#manage_btn
+@login_required
+def account_settings_redirect(request):
+    lang = request.session.get('user_lang', 'en')
+    
+    mapping = {
+        'en': 'account_settings',
+        'ja': 'account_settingsja',
+        'vi': 'account_settingsvi',
+        'fr': 'account_settingsfr',
+        'it': 'account_settingsit',
+        'pt': 'account_settingspt',
+        'zh-hant': 'account_settingszhHANT',
+        'ko': 'account_settingsko',
+        'es-es': 'account_settingsesES',
+        'de': 'account_settingsde',
+        'th': 'account_settingsth',
+        'pt-br': 'account_settingsptBR',
+        'es-mx': 'account_settingsesMX',
+        'en-in': 'account_settingsenIN',
+        'zh-cn': 'account_settingszhCN',
+    }
+    
+    url_name = mapping.get(lang, 'account_settings')
+    return redirect(f"{reverse(url_name)}?from=result")
+
 
 def contact_view(request):
     if request.method == "POST":
@@ -55,14 +695,14 @@ def contact_view(request):
             email = form.cleaned_data['email']
             message = form.cleaned_data['message']
 
-            # Gmail 送信用
+    
             full_message = f"From: {name} <{email}>\nTitle: {title}\n\n{message}"
 
             send_mail(
                 subject=f"[Support] {title}",
                 message=full_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=['yonetoru0@gmail.com'],  # 送信先
+                recipient_list=['yonetoru0@gmail.com'],  
                 fail_silently=False,
             )
             return render(request, 'thank_japan_app/contact_thanks.html', {'name': name})
@@ -76,229 +716,2554 @@ def contact_thanks(request):
     template = 'thank_japan_app/contact_thanks.html'
     return render(request, template)
 
-#Game
-from ratelimit.decorators import ratelimit
 
-@ratelimit(key='ip', rate='5/m', block=True)
-def game_start(request):
-    if request.session.get('player_id'):
-        return redirect('game_play')
 
-    if request.method == 'POST':
+
+#Game and login register
+
+def player_register(request):
+    next_url = request.GET.get('next') or request.POST.get('next') or 'toppage'
+    lang_code = request.GET.get('lang') or request.POST.get('lang') or 'en'
+    guest_score = request.POST.get('guest_score') or request.GET.get('guest_score') or '0'
+
+    if request.method == "POST":
         form = UsernameForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            raw_password = form.cleaned_data['password']
             country = form.cleaned_data['country']
 
-            player, created = Player.objects.get_or_create(username=username)
-            if not created:
-                messages.error(request, "This username is already taken. Please choose another.")
-                return render(request, 'thank_japan_app/game_start.html', {'form': form})
+            if User.objects.filter(username=username).exists() or Player.objects.filter(username=username).exists():
+                messages.error(request, "This username is already taken.")
+                return render(request, 'thank_japan_app/player_register.html', {
+                    'form': form, 'next': next_url, 'lang_code': lang_code, 'guest_score': guest_score
+                })
 
-            player.country = country
+            if User.objects.filter(email=email).exists() or Player.objects.filter(email=email).exists():
+                messages.error(request, "This email address is already registered.")
+                return render(request, 'thank_japan_app/player_register.html', {
+                    'form': form, 'next': next_url, 'lang_code': lang_code, 'guest_score': guest_score
+                })
+
+            user = User.objects.create_user(username=username, email=email, password=raw_password)
+            player = Player(username=username, email=email, country=country)
+            player.set_password(raw_password)
             player.save()
 
-            request.session['player_id'] = player.id
-            request.session['game_score'] = 0
-            request.session['game_current_index'] = 0
+            if hasattr(user, 'profile'):
+                user.profile.country = country
+                user.profile.save()
+            
+            messages.success(request, "Account created! Please log in.")
+            
+            keys_to_clear = ['is_guest', 'game_question_ids', 'game_current_index', 'game_message', 'last_question_info', 'game_difficulty', 'player_id']
+            for key in keys_to_clear:
+                request.session.pop(key, None)
+            
+            login_url = reverse('player_login')
+            query_params = urlencode({'next': next_url, 'lang': lang_code})
+            return redirect(f"{login_url}?{query_params}")
 
-            question_ids = list(ThankJapanModel.objects.values_list('id', flat=True))
-            random.shuffle(question_ids)
-            request.session['game_question_ids'] = question_ids[:10]
-
-            return redirect('game_play')
     else:
         form = UsernameForm()
 
-    return render(request, 'thank_japan_app/game_start.html', {'form': form})
-
-           
-def game_play(request):
-    player_id = request.session.get('player_id')
-    if not player_id:
-        return redirect('game_start')
+    return render(request, 'thank_japan_app/player_register.html', {
+        'form': form, 
+        'next': next_url, 
+        'lang_code': lang_code, 
+        'guest_score': guest_score
+    })        
     
-    player = get_object_or_404(Player, id=player_id)
 
-    index = request.session.get('game_current_index', 0)
-    ids = request.session.get('game_question_ids', [])
+def player_login(request):
+    next_url = request.GET.get('next') or request.POST.get('next') or 'toppage'
+    lang_code = request.GET.get('lang') or 'en'
 
-    if index >= len(ids):
-        return redirect('game_result')
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
 
-    question_id = ids[index]
-    question = get_object_or_404(ThankJapanModel, id=question_id)
+        if user is not None:
+            temp_guest_score = int(request.session.get('game_score', 0))
 
-    form = AnswerForm()
+            keys_to_clear = ['is_guest', 'game_score', 'game_question_ids', 'game_current_index', 'game_message', 'last_question_info', 'game_difficulty']
+            for key in keys_to_clear:
+                request.session.pop(key, None)
+            
+            auth_login(request, user)
+            
+            try:
+                profile = user.profile
+                profile.total_score += temp_guest_score
+                profile.save()
 
-    message = request.session.pop('game_message', None)
+                player_obj, created = Player.objects.get_or_create(username=user.username)
+                player_obj.total_score = profile.total_score
+                player_obj.save()
+                
+                request.session['player_id'] = player_obj.id
+            except:
+                pass
 
-    return render(request, 'thank_japan_app/game_play.html', {
-        'object': question,
-        'form': form,
-        'current_index': index + 1,
-        'score': request.session.get('game_score', 0),
-        'message': message,
-        'player': player,
-    })
-
-
-def game_answer(request, pk):
-    player_id = request.session.get('player_id')
-    if not player_id:
-        return redirect('game_start')
-
-    question = get_object_or_404(ThankJapanModel, id=pk)
-    form = AnswerForm(request.POST)
-
-    if form.is_valid():
-        user_input = form.cleaned_data['answer'].strip().lower()
-        correct_answer = question.name.strip().lower()
-
-        if user_input == correct_answer:
-            message = "Correct!"
-            request.session['game_score'] += 1
+            request.session['is_guest'] = False 
+            return redirect(next_url)
         else:
-            message = f"Incorrect! The correct answer was: {question.name}"
-
-        request.session['game_message'] = message
-
-        request.session['game_current_index'] += 1
-        return redirect('game_play')
-    else:
-        
-        return render(request, 'thank_japan_app/game_play.html', {
-            'object': question,
-            'form': form,
-            'message': "Please enter a valid answer."
-        })
-
-
-def game_result(request):
-
-    player_id = request.session.get('player_id')
-    score = request.session.get('game_score', 0)
-
-    player = get_object_or_404(Player, id=player_id)
-    player.total_score += score
-    player.save()
-
-    for key in ['game_question_ids', 'game_current_index', 'game_score']:
-        request.session.pop(key, None)
-
-    ranking = Player.objects.order_by('-total_score')[:20]
-
-    return render(request, 'thank_japan_app/game_result.html', {
-        'player': player,
-        'score': score,
-        'ranking': ranking
+            messages.error(request, "Invalid username or password.", extra_tags="login_invalid")
+            
+    return render(request, 'thank_japan_app/player_login.html', {
+        'next': next_url,
+        'lang_code': lang_code
     })
-
-def game_restart(request):
+        
     
-    keys_to_clear = ['game_question_ids', 'game_current_index', 'game_score']
+def player_logout(request):
+    lang_code = request.GET.get('lang')
+    
+    if not lang_code:
+        referer = request.META.get('HTTP_REFERER', '')
+        if '/ja/' in referer: lang_code = 'ja'
+        elif '/vi/' in referer: lang_code = 'vi'
+        elif '/fr/' in referer: lang_code = 'fr'
+        elif '/it/' in referer: lang_code = 'it'
+        elif '/pt/' in referer: lang_code = 'pt'
+        elif '/zh-hant/' in referer: lang_code = 'zh-hant'
+        elif '/zh-cn/' in referer: lang_code = 'zh-cn'
+        elif '/ko/' in referer: lang_code = 'ko'
+        elif '/es-es/' in referer: lang_code = 'es-es'
+        elif '/de/' in referer: lang_code = 'de'
+        elif '/th/' in referer: lang_code = 'th'
+        elif '/pt-br/' in referer: lang_code = 'pt-br'
+        elif '/es-mx/' in referer: lang_code = 'es-mx'
+        elif '/en-in/' in referer: lang_code = 'en-in'
+        else: lang_code = 'en'
+
+    auth_logout(request)
+    
+    keys_to_clear = ['player_id', 'game_question_ids', 'game_current_index', 'game_score', 'game_message', 'last_question_info', 'game_difficulty']
     for key in keys_to_clear:
         request.session.pop(key, None)
     
-    question_ids = list(ThankJapanModel.objects.values_list('id', flat=True))
-    random.shuffle(question_ids)
-    request.session['game_question_ids'] = question_ids[:10]
-    request.session['game_current_index'] = 0
-    request.session['game_score'] = 0
+    request.session['is_guest'] = True 
+    messages.info(request, "Logged out successfully.")
 
-    return redirect('game_play')
-
-
-def logout_player(request):
+    if lang_code == 'ja': return redirect('toppageja')
+    elif lang_code == 'vi': return redirect('toppagevi')
+    elif lang_code == 'fr': return redirect('toppagefr')
+    elif lang_code == 'it': return redirect('toppageit')
+    elif lang_code == 'pt': return redirect('toppagept')
+    elif lang_code == 'zh-hant': return redirect('toppagezhHANT')
+    elif lang_code == 'zh-cn': return redirect('toppagezhCN')
+    elif lang_code == 'ko': return redirect('toppageko')
+    elif lang_code == 'es-es': return redirect('toppageesES')
+    elif lang_code == 'de': return redirect('toppagede')
+    elif lang_code == 'th': return redirect('toppageth')
+    elif lang_code == 'pt-br': return redirect('toppageptBR')
+    elif lang_code == 'es-mx': return redirect('toppageesMX')
+    elif lang_code == 'en-in': return redirect('toppageenIN')
     
-    for key in ['player_id', 'game_question_ids', 'game_current_index', 'game_score']:
-        request.session.pop(key, None)
-    return redirect('game_start')  
+    return redirect('toppage')
 
+
+
+def delete_player_confirm(request):
+    if not request.user.is_authenticated:
+        return redirect('player_login')
+    return render(request, 'thank_japan_app/delete_player.html')
 
 @require_POST
 def delete_player(request):
-    player_id = request.session.get('player_id')
-    if not player_id:
-        return redirect('game_start')  
+    if not request.user.is_authenticated:
+        return redirect('player_login')
 
-    player = get_object_or_404(Player, id=player_id)
-    player.delete()
+    password = request.POST.get('password')
+    user = request.user
 
-    request.session.flush()
+    if user.check_password(password):
+        Player.objects.filter(username=user.username).delete()
+        user.delete()
+        request.session.flush()
+        messages.success(request, "Your account has been deleted.")
+        return redirect('toppage')
+    else:
+        messages.error(request, "Incorrect password. Account not deleted.")
+        return redirect('delete_player_confirm')
+    
+    
 
-    messages.error(request, "Your account has been deleted.")
-    return redirect('game_start')
+DIFFICULTY_SETTINGS = {
+    'single': {'num_questions': 1, 'model_type': 'free'},
+    'easy': {'category_filter': ['sports', 'food', 'animal', 'dailyactions'], 'length_regex': r'^.{1,20}$', 'num_questions': 50, 'model_type': 'free'},
+    'normal': {'category_filter': ['cook', 'food', 'culture', 'body', 'live', 'work', 'dailyactions'], 'length_regex': r'^.{1,9}$', 'num_questions': 50, 'model_type': 'free'},
+    'hard': {'category_filter': None, 'length_regex': r'^.{1,9}$', 'num_questions': 50, 'model_type': 'free'},
+    'super_hard': {'category_filter': None, 'length_regex': None, 'num_questions': 50, 'model_type': 'free'},
+    
+    'kanji1': {
+        'category_filter': ['nature', 'food', 'cook', 'animal', 'building', 'dailyactions'],
+        'length_regex': r'^.{1,3}$', 
+        'num_questions': 50,
+        'model_type': 'free',
+        'is_kanji_mode': True,
+    },
+    
+        'kanji2': {
+        'category_filter': ['culture', 'work', 'fashion', 'flower', 'householditems', 'sports', 'body'],
+        'length_regex': r'^.{1,3}$',  
+        'num_questions': 50,
+        'model_type': 'free',
+        'is_kanji_mode': True,
+    },
+
+    
+    'sample_premium': {'category_filter': ['DailyConversation', 'slang', 'TourismEtiquette' ,'Entertainment'], 'jlpt_level': ['N5', 'N4', 'N3'], 'num_questions': 550, 'model_type': 'premium'},
+    'n5_premium': {'jlpt_level': 'N5', 'num_questions': 50, 'model_type': 'premium'},
+    'n4_premium': {'jlpt_level': 'N4', 'num_questions': 50, 'model_type': 'premium'},
+    'n3_premium': {'jlpt_level': 'N3', 'num_questions': 50, 'model_type': 'premium'},
+}
+
+def get_current_player_info(request):
+    if request.user.is_authenticated:
+        player, _ = Player.objects.get_or_create(username=request.user.username)
+        return player, False
+    
+    temp_score = request.session.get('game_score', 0)
+    player = Player(username='Guest', country='Guestland', total_score=temp_score)
+    
+    return player, True
+
+
+#game_start_play
+
+def game_start(request):
+    player, is_guest = get_current_player_info(request)
+    
+    premium_url_name, lang_code = get_lang_info(request)
+
+    return render(request, 'thank_japan_app/game_start.html', {
+        'player': player, 
+        'is_guest': is_guest,
+        'lang_code': lang_code,
+        'premium_url_name': premium_url_name
+    })
+
+
+
+def game_play(request):
+    player, is_guest = get_current_player_info(request)
+    premium_url_name, lang_code = get_lang_info(request)
+    ids = request.session.get('game_question_ids', [])
+    index = request.session.get('game_current_index', 0)
+    is_premium_mode = request.session.get('is_premium_mode', False)
+
+    if not ids or index >= len(ids):
+        return redirect('game_start')
+
+    current_time = time.time()
+    
+    frozen = request.session.get('frozen_seconds_left')
+    if frozen is not None:
+        game_end_time = current_time + int(frozen)
+        request.session['game_end_time'] = game_end_time
+        del request.session['frozen_seconds_left']
+    else:
+        game_end_time = request.session.get('game_end_time')
+        if not game_end_time:
+            game_end_time = current_time + 61
+            request.session['game_end_time'] = game_end_time
+    
+    seconds_left = int(game_end_time - current_time)
+    difficulty = request.session.get('game_difficulty', 'normal')
+
+    if difficulty != 'single' and seconds_left <= 0:
+        return redirect('game_result')
+
+    settings = DIFFICULTY_SETTINGS.get(difficulty, {})
+    is_kanji_mode = settings.get('is_kanji_mode', False)
+
+    model = ThankJapanPremium if is_premium_mode else ThankJapanModel
+    question = get_object_or_404(model, id=ids[index])
+
+    choice_index = request.session.get('choice_index_check')
+    if choice_index == index and request.session.get('current_choices'):
+        choice_ids = request.session.get('current_choices')
+        choices = [get_object_or_404(model, id=cid) for cid in choice_ids]
+    else:
+        dummy_pool = model.objects.filter(category=question.category).exclude(id=question.id).exclude(jpname=question.jpname)
+        if is_kanji_mode:
+            dummy_pool = dummy_pool.filter(kanji_name__regex=r'[一-龠]')
+        if dummy_pool.count() < 2:
+            dummy_pool = model.objects.exclude(id=question.id).exclude(jpname=question.jpname)
+            if is_kanji_mode:
+                dummy_pool = dummy_pool.filter(kanji_name__regex=r'[一-龠]')
+        
+        num_to_sample = min(dummy_pool.count(), 2)
+        dummies = random.sample(list(dummy_pool), num_to_sample)
+        choice_objects = [question] + dummies
+        random.shuffle(choice_objects)
+        choices = choice_objects
+        request.session['current_choices'] = [c.id for c in choice_objects]
+        request.session['choice_index_check'] = index
+
+    db_answer = extract_base_name(question.name).lower()
+    return render(request, 'thank_japan_app/game_play.html', {
+        'object': question,
+        'choices': choices,
+        'seconds_left': seconds_left,
+        'show_result': False,
+        'form': AnswerForm(),
+        'current_index': index + 1,
+        'total_questions': len(ids),
+        'score': request.session.get('game_score', 0),
+        'player': player,
+        'is_guest': is_guest,
+        'hint_length': len(db_answer),
+        'difficulty': difficulty,
+        'is_premium_mode': is_premium_mode,
+        'is_kanji_mode': is_kanji_mode,
+        'lang_code': lang_code,
+    })
+         
+
+def game_answer(request, pk):
+    if request.method != 'POST':
+        return redirect('game_play')
+
+    player, is_guest = get_current_player_info(request)
+    is_premium_mode = request.session.get('is_premium_mode', False)
+    premium_url_name, lang_code = get_lang_info(request)
+
+    model = ThankJapanPremium if is_premium_mode else ThankJapanModel
+    question = get_object_or_404(model, id=pk)
+
+    difficulty = request.session.get('game_difficulty', 'normal')
+    settings = DIFFICULTY_SETTINGS.get(difficulty, {})
+    is_kanji_mode = settings.get('is_kanji_mode', False)
+
+    user_input = request.POST.get('answer', '').strip().lower()
+    
+    client_seconds_left = request.POST.get('seconds_left')
+    if client_seconds_left:
+        request.session['frozen_seconds_left'] = int(client_seconds_left)
+
+    user_answer_cleaned = extract_base_name(user_input).lower()
+    db_answer_cleaned = extract_base_name(question.name).lower()
+    correct_flag = (user_answer_cleaned == db_answer_cleaned)
+
+    history = request.session.get('game_history', [])
+    history.append({
+        'question_id': question.id,
+        'is_correct': correct_flag,
+        'user_input': user_input,
+        'correct_answer': question.name,
+    })
+    request.session['game_history'] = history
+
+    if correct_flag:
+        request.session['game_score'] = request.session.get('game_score', 0) + 1
+
+    index = request.session.get('game_current_index', 0)
+    ids = request.session.get('game_question_ids', [])
+    is_last_question = (index + 1) >= len(ids)
+
+    choice_ids = request.session.get('current_choices', [])
+    choices = [get_object_or_404(model, id=cid) for cid in choice_ids]
+
+    current_time = time.time()
+    game_end_time = request.session.get('game_end_time', current_time)
+    seconds_left = int(game_end_time - current_time)
+
+    return render(request, 'thank_japan_app/game_play.html', {
+        'object': question,
+        'choices': choices,
+        'user_input': user_input,
+        'is_correct': correct_flag,
+        'show_result': True,
+        'is_last_question': is_last_question,
+        'current_index': index + 1,
+        'total_questions': len(ids),
+        'score': request.session.get('game_score', 0),
+        'player': player,
+        'is_guest': is_guest,
+        'seconds_left': seconds_left,
+        'difficulty': difficulty,
+        'is_premium_mode': is_premium_mode,
+        'is_kanji_mode': is_kanji_mode,  
+        'lang_code': lang_code,
+    })    
+    
+                
+def game_next_question(request):
+    request.session['game_current_index'] = request.session.get('game_current_index', 0) + 1
+    if request.session['game_current_index'] >= len(request.session.get('game_question_ids', [])):
+        return redirect('game_result')
+    return redirect('game_play')    
+
+
+def game_restart(request):
+    difficulty = request.GET.get('difficulty', 'normal')
+    mode = request.GET.get('mode')
+    player, is_guest = get_current_player_info(request)
+
+    if mode == 'single':
+        model_type = request.GET.get('model_type')
+        val = request.GET.get('slug') 
+        
+        if model_type == 'premium':
+            question = get_object_or_404(ThankJapanPremium, slug=val)
+             
+            if question.category != "DailyConversation" and question.category != "slang" and question.category != "TourismEtiquette" and question.category != "Entertainment":
+                is_premium = request.user.is_authenticated and getattr(request.user.profile, 'is_premium', False)
+                
+                if not is_premium:
+                    free_sample_ids = ThankJapanPremium.objects.filter(
+                        category=question.category
+                    ).order_by('-timestamp').values_list('id', flat=True)[:5]
+                    
+                    if question.id not in free_sample_ids:
+                        url_name, _ = get_lang_info(request)
+                        return redirect(url_name)
+        
+            is_premium_mode = True
+        else:
+            try:
+                question = ThankJapanModel.objects.get(slug=val)
+            except ThankJapanModel.DoesNotExist:
+                question = get_object_or_404(ThankJapanModel, name=val)
+            is_premium_mode = False
             
-                                
+        selected_question_ids = [question.id]
+        difficulty = 'single'
+    else:
+        premium_only = ['n5_premium', 'n4_premium', 'n3_premium']
+        if difficulty in premium_only:
+            if is_guest or not getattr(request.user.profile, 'is_premium', False):
+                url_name, _ = get_lang_info(request)
+                return redirect(url_name)
+
+        settings = DIFFICULTY_SETTINGS.get(difficulty, DIFFICULTY_SETTINGS['normal'])
+        is_premium_mode = settings.get('model_type') == 'premium'
+        model = ThankJapanPremium if is_premium_mode else ThankJapanModel
+        qs = model.objects.all()
+
+        if settings.get('category_filter'): 
+            qs = qs.filter(category__in=settings['category_filter'])
+        if settings.get('jlpt_level'):
+            jlpt_val = settings['jlpt_level']
+            if isinstance(jlpt_val, list):
+                qs = qs.filter(jlpt_level__in=jlpt_val)
+            else:
+                qs = qs.filter(jlpt_level=jlpt_val)
+
+        if settings.get('is_kanji_mode'):
+            qs = qs.filter(kanji_name__isnull=False).exclude(kanji_name="")
+            qs = qs.filter(kanji_name__regex=r'[一-龠]')
+            if settings.get('length_regex'):
+                qs = qs.filter(kanji_name__iregex=settings['length_regex'])
+        else:
+            if settings.get('length_regex'):
+                qs = qs.filter(name__iregex=settings['length_regex'])
+        
+        ids = list(qs.values_list('id', flat=True))
+        random.shuffle(ids)
+        selected_question_ids = ids[:settings['num_questions']]
+
+    keys_to_clear = [
+        'game_question_ids', 'game_current_index', 'game_score', 'game_difficulty', 
+        'game_history', 'score_saved', 'is_premium_mode', 
+        'game_end_time', 'current_choices', 'choice_index_check'
+    ]
+    for key in keys_to_clear: request.session.pop(key, None)
+
+    request.session['game_question_ids'] = selected_question_ids
+    request.session['game_current_index'] = 0
+    request.session['game_score'] = 0
+    request.session['game_difficulty'] = difficulty
+    request.session['is_premium_mode'] = is_premium_mode
+    request.session['game_history'] = []
+    
+    return redirect('game_play')
+
+def game_result(request):
+    _, lang_code = get_lang_info(request)
+    score = int(request.session.get('game_score', 0))
+    player, is_guest = get_current_player_info(request)
+    is_premium_mode = request.session.get('is_premium_mode', False)
+    difficulty = request.session.get('game_difficulty')
+
+    if not request.session.get('score_saved', False) and score > 0:
+        if not is_guest and request.user.is_authenticated:
+            profile = request.user.profile
+            profile.total_score += score
+            profile.last_score = score
+            profile.save()
+
+            player.total_score = profile.total_score
+            player.last_score = score
+            player.country = profile.country
+            player.save()
+            
+            week_start = WeeklyScore.get_current_week_start()
+            weekly_record, created = WeeklyScore.objects.get_or_create(
+                user=request.user,
+                week_start=week_start
+            )
+            weekly_record.score += score
+            weekly_record.country = profile.country 
+            weekly_record.save()
+        
+        request.session['score_saved'] = True
+        
+    current_rank = None
+    total_registered = 0
+    if not is_guest:
+        
+        registered_players = Player.objects.exclude(username__icontains="Guest")
+        total_registered = registered_players.count()
+        
+        higher_scores_count = registered_players.filter(total_score__gt=player.total_score).count()
+        current_rank = higher_scores_count + 1
+    
+    history = request.session.get('game_history', [])
+    model = ThankJapanPremium if is_premium_mode else ThankJapanModel
+    played_ids = [h['question_id'] for h in history]
+    played_questions = model.objects.in_bulk(played_ids)
+
+    review_data = []
+    for h in history:
+        q = played_questions.get(h['question_id'])
+        if q: 
+            review_data.append({
+                'object': q, 
+                'is_correct': h['is_correct'], 
+                'user_input': h['user_input'], 
+                'correct_answer': h.get('correct_answer', q.name)
+            })
+
+    ranking = Player.objects.exclude(username__icontains="Guest").order_by('-total_score')[:20]
+    
+    current_week = WeeklyScore.get_current_week_start()
+    raw_weekly_ranking = WeeklyScore.objects.filter(
+        week_start=current_week
+    ).order_by('-score')[:10]
+    
+    weekly_ranking = []
+    last_score = None
+    current_rank = 0
+
+    for i, r in enumerate(raw_weekly_ranking, 1):
+        if r.score != last_score:
+            current_rank = i  
+        
+        r.display_rank = current_rank
+        weekly_ranking.append(r)
+        last_score = r.score
+
+    return render(request, 'thank_japan_app/game_result.html', {
+        'lang_code': lang_code,
+        'player': player, 
+        'score': score, 
+        'total_played': len(history),
+        'is_guest': is_guest, 
+        'review_data': review_data, 
+        'difficulty': difficulty,
+        'is_premium_mode': is_premium_mode,
+        'ranking': ranking,
+        'weekly_ranking': weekly_ranking,
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    })    
+                            
+#category select view
+
+def category_list(request):
+    return render(request, 'thank_japan_app/category/category_list.html') 
+
+def category_list_zhcn(request):
+    return render(request, 'thank_japan_app/category/category_list_zh_cn.html') 
+
+def category_list_zhhant(request):
+    return render(request, 'thank_japan_app/category/category_list_zh_hant.html') 
+
+def category_list_vi(request):
+    return render(request, 'thank_japan_app/category/category_list_vi.html') 
+
+def category_list_th(request):
+    return render(request, 'thank_japan_app/category/category_list_th.html')
+
+def category_list_pt(request):
+    return render(request, 'thank_japan_app/category/category_list_pt.html') 
+
+def category_list_pt_br(request):
+    return render(request, 'thank_japan_app/category/category_list_pt_br.html') 
+
+def category_list_ko(request):
+    return render(request, 'thank_japan_app/category/category_list_ko.html') 
+
+def category_list_ja(request):
+    return render(request, 'thank_japan_app/category/category_list_ja.html')
+ 
+def category_list_it(request):
+    return render(request, 'thank_japan_app/category/category_list_it.html')
+ 
+def category_list_fr(request):
+    return render(request, 'thank_japan_app/category/category_list_fr.html')
+
+def category_list_es_mx(request):
+    return render(request, 'thank_japan_app/category/category_list_es_mx.html')
+
+def category_list_es_es(request):
+    return render(request, 'thank_japan_app/category/category_list_es_es.html')
+ 
+def category_list_en_in(request):
+    return render(request, 'thank_japan_app/category/category_list_en_in.html')
+ 
+def category_list_de(request):
+    return render(request, 'thank_japan_app/category/category_list_de.html')
+ 
+ 
+#category view
+                            
 class FoodView(ListView):
     template_name = "thank_japan_app/food.html"
+    paginate_by = 24
     
     def get_queryset(self):
         return ThankJapanModel.objects.filter(category="food").order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Food Guide | Popular Dishes, Street Food & Snacks | ThankJapan"
+        context['seo_description'] = "Discover iconic Japanese foods like sushi, ramen, and tempura. Learn about their ingredients and cultural roots."
+        context['seo_og_title'] = "Japanese Food - Explore Traditional Dishes | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
 
 class NatureView(ListView):
     template_name = "thank_japan_app/nature.html"
+    paginate_by = 24
     
     def get_queryset(self):
         return ThankJapanModel.objects.filter(category="nature").order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Explore Japanese Nature | Mountains, Forests & Scenic Views | ThankJapan"
+        context['seo_description'] = "Discover the beauty of Japanese nature including mountains, forests, gardens, and scenic landscapes."
+        context['seo_og_title'] = "Japanese Nature - Scenic Spots & Natural Wonders | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
 
 class FashionView(ListView):
     template_name = "thank_japan_app/fashion.html"
+    paginate_by = 24
     
     def get_queryset(self):
         return ThankJapanModel.objects.filter(category="fashion").order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Fashion | Traditional & Modern Styles | ThankJapan"
+        context['seo_description'] = "Explore Japanese fashion, from traditional kimono to modern streetwear and pop culture trends."
+        context['seo_og_title'] = "Japanese Fashion - Kimono, Streetwear & Trends | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
 
 class CultureView(ListView):
     template_name = "thank_japan_app/culture.html"
+    paginate_by = 24
     
     def get_queryset(self):
         return ThankJapanModel.objects.filter(category="culture").order_by('-timestamp')
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Culture | Traditions, Festivals & Customs | ThankJapan"
+        context['seo_description'] = "Learn about Japanese culture, including festivals, traditional arts, customs, and heritage."
+        context['seo_og_title'] = "Japanese Culture - Festivals, Arts & Traditions | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
+    
 class CookView(ListView):
     template_name = "thank_japan_app/cook.html"
+    paginate_by = 24
     
     def get_queryset(self):
         return ThankJapanModel.objects.filter(category="cook").order_by('-timestamp')
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Cooking | Recipes & Culinary Techniques | ThankJapan"
+        context['seo_description'] = "Discover Japanese cooking techniques and recipes from traditional dishes to modern cuisine."
+        context['seo_og_title'] = "Japanese Cooking - Recipes & Techniques | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
+    
 class AppliancesView(ListView):
     template_name = "thank_japan_app/appliances.html"
+    paginate_by = 24
     
     def get_queryset(self):
         return ThankJapanModel.objects.filter(category="appliances").order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Appliances | Modern & Traditional Devices | ThankJapan"
+        context['seo_description'] = "Explore Japanese home appliances, both modern and traditional, and learn how they simplify daily life."
+        context['seo_og_title'] = "Japanese Appliances - Innovative Devices & Tools | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
 
 class AnimalView(ListView):
     template_name = "thank_japan_app/animal.html"
+    paginate_by = 24
     
     def get_queryset(self):
         return ThankJapanModel.objects.filter(category="animal").order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Animals | Wildlife & Pets | ThankJapan"
+        context['seo_description'] = "Learn about animals in Japan, from native wildlife to popular pets and cultural symbolism."
+        context['seo_og_title'] = "Japanese Animals - Wildlife & Pets | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
 
 class BuildingView(ListView):
     template_name = "thank_japan_app/building.html"
+    paginate_by = 24
     
     def get_queryset(self):
         return ThankJapanModel.objects.filter(category="building").order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Buildings | Architecture & Landmarks | ThankJapan"
+        context['seo_description'] = "Explore Japanese architecture, from historic temples and shrines to modern urban buildings."
+        context['seo_og_title'] = "Japanese Buildings - Traditional & Modern Architecture | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
 
 class FlowerView(ListView):
     template_name = "thank_japan_app/flower.html"
+    paginate_by = 24
     
     def get_queryset(self):
         return ThankJapanModel.objects.filter(category="flower").order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Flowers | Traditional Gardens & Seasonal Blooms | ThankJapan"
+        context['seo_description'] = "Discover Japanese flowers and gardens, seasonal blooms, and their cultural significance."
+        context['seo_og_title'] = "Japanese Flowers - Gardens & Seasonal Blooms | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
 
 class HouseholdItemsView(ListView):
     template_name = "thank_japan_app/householditems.html"
+    paginate_by = 24
     
     def get_queryset(self):
         return ThankJapanModel.objects.filter(category="householditems").order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Household Items | Traditional & Modern Goods | ThankJapan"
+        context['seo_description'] = "Explore Japanese household items, including traditional tools and modern gadgets used in everyday life."
+        context['seo_og_title'] = "Japanese Household Items - Traditional & Modern Goods | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
 
 class SportsView(ListView):
     template_name = "thank_japan_app/sports.html"
+    paginate_by = 24
     
     def get_queryset(self):
         return ThankJapanModel.objects.filter(category="sports").order_by('-timestamp')
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Sports | Traditional & Modern Games | ThankJapan"
+        context['seo_description'] = "Learn about sports in Japan, from traditional martial arts to modern popular games."
+        context['seo_og_title'] = "Japanese Sports - Martial Arts & Modern Games | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
+    
 class WorkView(ListView):
     template_name = "thank_japan_app/work.html"
+    paginate_by = 24
     
     def get_queryset(self):
         return ThankJapanModel.objects.filter(category="work").order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Work Culture | Jobs, Professions & Traditions | ThankJapan"
+        context['seo_description'] = "Explore Japanese work culture, professions, and workplace traditions throughout history and today."
+        context['seo_og_title'] = "Japanese Work Culture - Jobs & Traditions | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
+    
+class LiveView(ListView):
+    template_name = "thank_japan_app/live.html"
+    paginate_by = 24
+    
+    def get_queryset(self):
+        return ThankJapanModel.objects.filter(category="live").order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Living in Japan | Lifestyle, Housing & Daily Life | ThankJapan"
+        context['seo_description'] = "Learn about daily life in Japan, housing, and lifestyle, from traditional to modern practices."
+        context['seo_og_title'] = "Living in Japan - Lifestyle & Daily Life | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
+    
+
+class BodyView(ListView):
+    template_name = "thank_japan_app/body.html"
+    paginate_by = 24
+    
+    def get_queryset(self):
+        return ThankJapanModel.objects.filter(category="body").order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Body Parts List | Learn Vocabulary & Kanji | ThankJapan"
+        context['seo_description'] = "Master essential Japanese vocabulary for body parts. Learn kanji and pronunciation for head, hands, feet, and more to help in daily life and health."
+        context['seo_og_title'] = "Learn Japanese Body Parts - Essential Vocabulary | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
+
+    
+class DailyactionsView(ListView):
+    template_name = "thank_japan_app/dailyactions.html"
+    paginate_by = 24
+    
+    def get_queryset(self):
+        return ThankJapanModel.objects.filter(category="dailyactions").order_by('-timestamp')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        
+        context['seo_title'] = "Japanese Daily Actions & Verbs | Learn Basic Vocabulary | ThankJapan"
+        context['seo_description'] = "Master essential Japanese verbs for daily actions. Learn kanji and pronunciation for eating, drinking, sleeping, and more to help in everyday life."
+        context['seo_og_title'] = "Learn Japanese Daily Actions - Essential Basic Verbs | ThankJapan"
+        context['seo_og_description'] = context['seo_description']
+        return context
+
+
+    
+#japan food
+
+class JapanFoodView(TemplateView):
+    template_name = "thank_japan_app/japan/japanfoodpage.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        lang = self.kwargs.get('lang_code') or self.request.GET.get('lang')
+        context['lang'] = lang
+        
+        
+        base_files = {
+            'ja': 'base/base_ja.html',
+            'ko': 'base/base_ko.html',
+            'zh-cn': 'base/base_zh_cn.html',
+            'zh-hant': 'base/base_zh_hant.html',
+            'th': 'base/base_th.html',
+            'vi': 'base/base_vi.html',
+            'de': 'base/base_de.html',
+            'fr': 'base/base_fr.html',
+            'it': 'base/base_it.html',
+            'es-es': 'base/base_es_es.html',
+            'es-mx': 'base/base_es_mx.html',
+            'pt': 'base/base_pt.html',
+            'pt-br': 'base/base_pt_br.html',
+            'en-in': 'base/base_en_in.html',
+        }
+        
+        context['base_template'] = base_files.get(lang, 'base/base.html')
+        
+        return context
+    
+    
+#culture(todouhuken)
+
+class PrefectureListView(TemplateView):
+    template_name = "thank_japan_app/japan/prefecture_list_page.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        lang_code = self.kwargs.get('lang_code') or self.request.GET.get('lang')
+        
+        if not lang_code:
+            from thank_japan_app.views import get_lang_info 
+            _, lang_code = get_lang_info(self.request)
+            
+        context['lang'] = lang_code
+        
+        base_files = {
+            'ja': 'base/base_ja.html', 'ko': 'base/base_ko.html',
+            'zh-cn': 'base/base_zh_cn.html', 'zh-hant': 'base/base_zh_hant.html',
+            'th': 'base/base_th.html', 'vi': 'base/base_vi.html',
+            'de': 'base/base_de.html', 'fr': 'base/base_fr.html',
+            'it': 'base/base_it.html', 'es-es': 'base/base_es_es.html',
+            'es-mx': 'base/base_es_mx.html', 'pt': 'base/base_pt.html',
+            'pt-br': 'base/base_pt_br.html', 'en-in': 'base/base_en_in.html',
+        }
+        context['base_template'] = base_files.get(lang_code, 'base/base.html')
+        return context
+    
+    
+
+class IshikawaView(TemplateView):
+    template_name = "thank_japan_app/japan/ishikawapage.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        lang = self.kwargs.get('lang_code') or self.request.GET.get('lang')
+        
+        base_files = {
+            'ja': 'base/base_ja.html',
+            'ko': 'base/base_ko.html',
+            'zh-cn': 'base/base_zh_cn.html',
+            'zh-hant': 'base/base_zh_hant.html',
+            'th': 'base/base_th.html',
+            'vi': 'base/base_vi.html',
+            'de': 'base/base_de.html',
+            'fr': 'base/base_fr.html',
+            'it': 'base/base_it.html',
+            'es-es': 'base/base_es_es.html',
+            'es-mx': 'base/base_es_mx.html',
+            'pt': 'base/base_pt.html',
+            'pt-br': 'base/base_pt_br.html',
+            'en-in': 'base/base_en_in.html',
+        }
+        
+        
+        context['lang'] = lang
+        context['base_template'] = base_files.get(lang, 'base/base.html')
+        
+        return context    
+
+
+class ToyamaView(TemplateView):
+    template_name = "thank_japan_app/japan/toyamapage.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        lang = self.kwargs.get('lang_code') or self.request.GET.get('lang')
+        
+        base_files = {
+            'ja': 'base/base_ja.html',
+            'ko': 'base/base_ko.html',
+            'zh-cn': 'base/base_zh_cn.html',
+            'zh-hant': 'base/base_zh_hant.html',
+            'th': 'base/base_th.html',
+            'vi': 'base/base_vi.html',
+            'de': 'base/base_de.html',
+            'fr': 'base/base_fr.html',
+            'it': 'base/base_it.html',
+            'es-es': 'base/base_es_es.html',
+            'es-mx': 'base/base_es_mx.html',
+            'pt': 'base/base_pt.html',
+            'pt-br': 'base/base_pt_br.html',
+            'en-in': 'base/base_en_in.html',
+        }
+        
+        
+        context['lang'] = lang
+        context['base_template'] = base_files.get(lang, 'base/base.html')
+        
+        return context    
+
+
+class FukuiView(TemplateView):
+    template_name = "thank_japan_app/japan/fukuipage.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        lang = self.kwargs.get('lang_code') or self.request.GET.get('lang')
+        
+        base_files = {
+            'ja': 'base/base_ja.html',
+            'ko': 'base/base_ko.html',
+            'zh-cn': 'base/base_zh_cn.html',
+            'zh-hant': 'base/base_zh_hant.html',
+            'th': 'base/base_th.html',
+            'vi': 'base/base_vi.html',
+            'de': 'base/base_de.html',
+            'fr': 'base/base_fr.html',
+            'it': 'base/base_it.html',
+            'es-es': 'base/base_es_es.html',
+            'es-mx': 'base/base_es_mx.html',
+            'pt': 'base/base_pt.html',
+            'pt-br': 'base/base_pt_br.html',
+            'en-in': 'base/base_en_in.html',
+        }
+        
+        
+        context['lang'] = lang
+        context['base_template'] = base_files.get(lang, 'base/base.html')
+        
+        return context    
+
+
+
+#Thank_Japan premium 
+
+
+@login_required
+@require_POST
+def update_premium_status(request):
+    try:
+        data = json.loads(request.body)
+        subscription_id = data.get('subscriptionID')
+        
+        if not subscription_id:
+            return JsonResponse({'status': 'error'}, status=400)
+
+        profile, created = Profile.objects.get_or_create(user=request.user)
+        
+        profile.is_premium = True
+        profile.paypal_subscription_id = subscription_id
+        profile.save()
+        
+        return JsonResponse({'status': 'success'})
+
+    except Exception as e:
+        print(f"Update Error: {str(e)}")
+        return JsonResponse({'status': 'error'}, status=500)
+
+@csrf_exempt
+def paypal_webhook(request):
+    
+    try:
+        data = json.loads(request.body)
+        event_type = data.get('event_type')
+        resource = data.get('resource')
+        subscription_id = resource.get('id')
+
+        
+        trigger_events = [
+            "BILLING.SUBSCRIPTION.CANCELLED",
+            "BILLING.SUBSCRIPTION.SUSPENDED",
+            "BILLING.SUBSCRIPTION.EXPIRED",
+            "BILLING.SUBSCRIPTION.PAYMENT.FAILED"
+        ]
+
+        if event_type in trigger_events:
+            Profile.objects.filter(paypal_subscription_id=subscription_id).update(is_premium=False)
+            print(f"Webhook Handled: {subscription_id} to Free")
+
+        return HttpResponse(status=200)
+
+    except Exception as e:
+        print(f"Webhook Error: {str(e)}")
+        return HttpResponse(status=200)     
+        
+#premium_info
+
+def get_lang_info(request):
+    
+    lang_code = request.GET.get('lang')
+    
+    
+    if not lang_code:
+        path = request.path.lower()
+        lang_keys = [
+            'zh-hant', 'zh-cn', 'de', 'en-in', 'es-es', 'es-mx', 
+            'fr', 'it', 'ja', 'ko', 'pt-br', 'pt', 'th', 'vi'
+        ]
+        for key in lang_keys:
+            if f'/{key}/' in path:
+                lang_code = key
+                break
+
+    
+    if not lang_code:
+        lang_code = request.session.get('user_lang')
+
+    
+    if not lang_code:
+        referer = request.META.get('HTTP_REFERER', '').lower()
+        for key in lang_keys:
+            if f'/{key}/' in referer:
+                lang_code = key
+                break
+
+    if not lang_code:
+        lang_code = 'en'
+
+    request.session['user_lang'] = lang_code
+
+    lang_map = {
+        'de': 'premium_infode',
+        'en-in': 'premium_infoenIN',
+        'es-es': 'premium_infoesES',
+        'es-mx': 'premium_infoesMX',
+        'fr': 'premium_infofr',
+        'it': 'premium_infoit',
+        'ja': 'premium_infoja',
+        'ko': 'premium_infoko',
+        'pt-br': 'premium_infoptBR',
+        'pt': 'premium_infopt',
+        'th': 'premium_infoth',
+        'vi': 'premium_infovi',
+        'zh-hant': 'premium_infozhHANT',
+        'zh-cn': 'premium_infozhCN',
+    }
+    
+    url_name = lang_map.get(lang_code, 'premium_info')
+    return url_name, lang_code
+
+
+def premium_info(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info.html', context)
+
+def premium_infoZHCN(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_zh_cn.html', context)
+
+
+def premium_infoZHHANT(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_zh_hant.html', context)
+
+def premium_infoVI(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_vi.html', context)
+
+def premium_infoTH(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_th.html', context)
+
+def premium_infoPT(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_pt.html', context)
+
+def premium_infoPTBR(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_pt_br.html', context)
+
+def premium_infoKO(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_ko.html', context)
+
+def premium_infoJA(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_ja.html', context)
+
+def premium_infoIT(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_it.html', context)
+
+def premium_infoFR(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_fr.html', context)
+
+def premium_infoESMX(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_es_mx.html', context)
+
+def premium_infoESES(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_es_es.html', context)
+
+def premium_infoENIN(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_en_in.html', context)
+
+def premium_infoDE(request):
+    context = {
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
+        'paypal_plan_id': settings.PAYPAL_PLAN_ID,
+    }
+    return render(request, 'thank_japan_app/premium/premium_info_de.html', context)
+
+
+#thankyou
+@login_required
+def thank_you(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you.html')
+
+@login_required
+def thank_youZHCN(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_zh_cn.html')
+
+
+@login_required
+def thank_youZHHANT(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_zh_hant.html')
+
+@login_required
+def thank_youVI(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_vi.html')
+
+@login_required
+def thank_youTH(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_th.html')
+
+@login_required
+def thank_youPT(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_pt.html')
+
+@login_required
+def thank_youPTBR(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_pt_br.html')
+
+@login_required
+def thank_youKO(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_ko.html')
+
+@login_required
+def thank_youJA(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_ja.html')
+
+@login_required
+def thank_youIT(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_it.html')
+
+@login_required
+def thank_youFR(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_fr.html')
+
+@login_required
+def thank_youESMX(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_es_mx.html')
+
+@login_required
+def thank_youESES(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_es_es.html')
+
+@login_required
+def thank_youENIN(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_en_in.html')
+
+@login_required
+def thank_youDE(request):
+    return render(request, 'thank_japan_app/thankyou/thank_you_de.html')
+
+
+#account_settings
+@login_required
+def account_settings(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings.html', context)
+
+
+@login_required
+def account_settingsZHCN(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_zh_cn.html', context)
+
+
+@login_required
+def account_settingsZHHANT(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_zh_hant.html', context)
+
+
+@login_required
+def account_settingsVI(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_vi.html', context)
+
+
+@login_required
+def account_settingsTH(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_th.html', context)
+
+
+@login_required
+def account_settingsPT(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_pt.html', context)
+
+
+@login_required
+def account_settingsPTBR(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_pt_br.html', context)
+
+
+@login_required
+def account_settingsKO(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_ko.html', context)
+
+
+@login_required
+def account_settingsJA(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+     
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_ja.html', context)
+
+
+@login_required
+def account_settingsIT(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_it.html', context)
+
+
+@login_required
+def account_settingsFR(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_fr.html', context)
+
+
+@login_required
+def account_settingsESMX(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_es_mx.html', context)
+
+
+@login_required
+def account_settingsESES(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_es_es.html', context)
+
+
+@login_required
+def account_settingsENIN(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_en_in.html', context)
+
+
+@login_required
+def account_settingsDE(request):
+    profile = request.user.profile
+    s = profile.total_score
+    
+    registered_players = Player.objects.exclude(username__icontains="Guest")
+    total_registered = registered_players.count()
+    current_rank = registered_players.filter(total_score__gt=s).count() + 1
+    
+    
+    thresholds = [0, 50, 100, 200, 300, 450, 650, 900, 1200, 2000]
+    
+    current_min = 0
+    next_max = 2000
+    for i in range(len(thresholds) - 1):
+        if s < thresholds[i+1]:
+            current_min = thresholds[i]
+            next_max = thresholds[i+1]
+            break
+    else:
+        current_min = 2000
+        next_max = 2000
+
+    
+    pts_to_next = next_max - s if s < 2000 else 0
+    
+    if next_max > current_min:
+        progress_percent = ((s - current_min) / (next_max - current_min)) * 100
+    else:
+        progress_percent = 100
+
+    context = {
+        'total_score': s,
+        'pts_to_next': pts_to_next,
+        'progress_percent': progress_percent, 
+        'current_rank': current_rank,         
+        'total_registered': total_registered  
+    }
+    return render(request, 'thank_japan_app/account/account_settings_de.html', context)
+
+
+#subscription
+
+def get_paypal_access_token():
+    auth_url = "https://api-m.paypal.com/v1/oauth2/token"
+    if settings.PAYPAL_MODE == "sandbox":
+        auth_url = "https://api-m.sandbox.paypal.com/v1/oauth2/token"
+    resp = requests.post(auth_url, auth=(settings.PAYPAL_CLIENT_ID, settings.PAYPAL_CLIENT_SECRET), data={"grant_type": "client_credentials"})
+    return resp.json().get('access_token')
+
+def cancel_paypal_subscription(subscription_id, reason):
+    token = get_paypal_access_token()
+    if token:
+        cancel_url = f"https://api-m.paypal.com/v1/billing/subscriptions/{subscription_id}/cancel"
+        if settings.PAYPAL_MODE == "sandbox":
+            cancel_url = f"https://api-m.sandbox.paypal.com/v1/billing/subscriptions/{subscription_id}/cancel"
+        requests.post(cancel_url, headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"}, json={"reason": reason})
+
+@login_required
+@require_POST
+def downgrade_premium(request):
+    profile = request.user.profile
+    if profile.is_premium and profile.paypal_subscription_id:
+        try:
+            cancel_paypal_subscription(profile.paypal_subscription_id, "User downgraded")
+        except Exception:
+            pass
+    profile.is_premium = False
+    profile.save()
+    next_url = request.POST.get('downgrade_url_name', 'downgrade_success')
+    return redirect(next_url)
+
+@login_required
+@require_POST
+def delete_account(request):
+    username = request.user.username
+    user = request.user
+    profile = user.profile
+    if profile.is_premium and profile.paypal_subscription_id:
+        try:
+            cancel_paypal_subscription(profile.paypal_subscription_id, "User deleted account")
+        except Exception:
+            pass
+    Player.objects.filter(username=username).delete()
+    user.delete()
+    logout(request) 
+    next_url = request.POST.get('success_url_name', 'delete_success')
+    return redirect(next_url)
+
+
+#downgrade_success
+
+def downgrade_success(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success.html')
+
+def downgrade_successZHCN(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_zh_cn.html')
+
+def downgrade_successZHHANT(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_zh_hant.html')
+
+def downgrade_successVI(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_vi.html')
+
+def downgrade_successTH(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_th.html')
+
+def downgrade_successPT(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_pt.html')
+
+def downgrade_successPTBR(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_pt_br.html')
+
+def downgrade_successKO(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_ko.html')
+
+def downgrade_successJA(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_ja.html')
+
+def downgrade_successIT(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_it.html')
+
+def downgrade_successFR(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_fr.html')
+
+def downgrade_successESMX(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_es_mx.html')
+
+def downgrade_successESES(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_es_es.html')
+
+def downgrade_successENIN(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_en_in.html')
+
+def downgrade_successDE(request):
+    return render(request, 'thank_japan_app/downgrade/downgrade_success_de.html')
+
+
+#delete_success
+
+def delete_success(request):
+    return render(request, 'thank_japan_app/delete/delete_success.html')
+
+def delete_successZHCN(request):
+    return render(request, 'thank_japan_app/delete/delete_success_zh_cn.html')
+
+def delete_successZHHANT(request):
+    return render(request, 'thank_japan_app/delete/delete_success_zh_hant.html')
+
+def delete_successVI(request):
+    return render(request, 'thank_japan_app/delete/delete_success_vi.html')
+
+def delete_successTH(request):
+    return render(request, 'thank_japan_app/delete/delete_success_th.html')
+
+def delete_successPT(request):
+    return render(request, 'thank_japan_app/delete/delete_success_pt.html')
+
+def delete_successPTBR(request):
+    return render(request, 'thank_japan_app/delete/delete_success_pt_br.html')
+
+def delete_successKO(request):
+    return render(request, 'thank_japan_app/delete/delete_success_ko.html')
+
+def delete_successJA(request):
+    return render(request, 'thank_japan_app/delete/delete_success_ja.html')
+
+def delete_successIT(request):
+    return render(request, 'thank_japan_app/delete/delete_success_it.html')
+
+def delete_successFR(request):
+    return render(request, 'thank_japan_app/delete/delete_success_fr.html')
+
+def delete_successESMX(request):
+    return render(request, 'thank_japan_app/delete/delete_success_es_mx.html')
+
+def delete_successESES(request):
+    return render(request, 'thank_japan_app/delete/delete_success_es_es.html')
+
+def delete_successENIN(request):
+    return render(request, 'thank_japan_app/delete/delete_success_en_in.html')
+
+def delete_successDE(request):
+    return render(request, 'thank_japan_app/delete/delete_success_de.html')
+
+
+#free-category
+
+class DailyConversationView(ListView):
+    template_name = "thank_japan_app/dairy_conversation.html"
+    paginate_by = 24
+    
+    def get_queryset(self):
+        return ThankJapanPremium.objects.filter(category="DailyConversation").order_by('timestamp')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        return context 
+    
+    
+class TourismEtiquetteView(ListView):
+    template_name = "thank_japan_app/tourism_etiquette.html"
+    paginate_by = 24
+    
+    def get_queryset(self):
+        return ThankJapanPremium.objects.filter(category="TourismEtiquette").order_by('timestamp')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        return context
+    
+
+class EntertainmentView(ListView):
+    template_name = "thank_japan_app/entertainment.html"
+    paginate_by = 24
+    
+    def get_queryset(self):
+        return ThankJapanPremium.objects.filter(category="Entertainment").order_by('timestamp')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        return context    
+  
+ 
+      
+
+class SlangView(ListView):
+    template_name = "thank_japan_app/slang.html"
+    paginate_by = 24
+    
+    def get_queryset(self):
+        return ThankJapanPremium.objects.filter(category="slang").order_by('timestamp')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+        return context    
+    
+    
+
+#premium-category
+   
+    
+class BusinessJapaneseView(ListView):
+    template_name = "thank_japan_app/business_japanese.html"
+    paginate_by = 24
+    
+    def dispatch(self, request, *args, **kwargs):
+        is_premium = request.user.is_authenticated and getattr(request.user.profile, 'is_premium', False)
+        if not is_premium and request.GET.get('page', '1') != '1':
+            url_name, lang_code = get_lang_info(request)
+            return redirect(f"{reverse(url_name)}?lang={lang_code}") 
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        qs = ThankJapanPremium.objects.filter(category="BusinessJapanese").order_by('timestamp')
+        is_premium = self.request.user.is_authenticated and getattr(self.request.user.profile, 'is_premium', False)
+        if not is_premium:
+            return qs[:6]
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_premium_qs = ThankJapanPremium.objects.filter(category="BusinessJapanese")
+        total_count = all_premium_qs.count()
+        
+        is_premium = self.request.user.is_authenticated and getattr(self.request.user.profile, 'is_premium', False)
+        url_name, lang_code = get_lang_info(self.request)
+        
+        context['lang_code'] = lang_code
+        context['premium_url_name'] = url_name
+
+        if not is_premium:
+            context['is_locked'] = True
+            context['hidden_count'] = max(0, total_count - 6)
+        else:
+            context['is_locked'] = False
+            
+        return context
+    
+        
+class LivingInJapanView(ListView):
+    template_name = "thank_japan_app/living_in_japan.html"
+    paginate_by = 24
+    
+    def dispatch(self, request, *args, **kwargs):
+        is_premium = request.user.is_authenticated and getattr(request.user.profile, 'is_premium', False)
+        if not is_premium and request.GET.get('page', '1') != '1':
+            url_name, lang_code = get_lang_info(request)
+            return redirect(f"{reverse(url_name)}?lang={lang_code}") 
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        qs = ThankJapanPremium.objects.filter(category="LivingInJapan").order_by('timestamp')
+        is_premium = self.request.user.is_authenticated and getattr(self.request.user.profile, 'is_premium', False)
+        if not is_premium:
+            return qs[:6]
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_premium_qs = ThankJapanPremium.objects.filter(category="LivingInJapan")
+        total_count = all_premium_qs.count()
+        
+        is_premium = self.request.user.is_authenticated and getattr(self.request.user.profile, 'is_premium', False)
+        url_name, lang_code = get_lang_info(self.request)
+        
+        context['lang_code'] = lang_code
+        context['premium_url_name'] = url_name
+
+        if not is_premium:
+            context['is_locked'] = True
+            context['hidden_count'] = max(0, total_count - 6)
+        else:
+            context['is_locked'] = False
+            
+        return context
+    
+    
+class MedicalEmergencyView(ListView):
+    template_name = "thank_japan_app/medical_emergency.html"
+    paginate_by = 24
+    
+    def dispatch(self, request, *args, **kwargs):
+        is_premium = request.user.is_authenticated and getattr(request.user.profile, 'is_premium', False)
+        if not is_premium and request.GET.get('page', '1') != '1':
+            url_name, lang_code = get_lang_info(request)
+            return redirect(f"{reverse(url_name)}?lang={lang_code}") 
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        qs = ThankJapanPremium.objects.filter(category="MedicalEmergency").order_by('timestamp')
+        is_premium = self.request.user.is_authenticated and getattr(self.request.user.profile, 'is_premium', False)
+        if not is_premium:
+            return qs[:6]
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_premium_qs = ThankJapanPremium.objects.filter(category="MedicalEmergency")
+        total_count = all_premium_qs.count()
+        
+        is_premium = self.request.user.is_authenticated and getattr(self.request.user.profile, 'is_premium', False)
+        url_name, lang_code = get_lang_info(self.request)
+        
+        context['lang_code'] = lang_code
+        context['premium_url_name'] = url_name
+
+        if not is_premium:
+            context['is_locked'] = True
+            context['hidden_count'] = max(0, total_count - 6)
+        else:
+            context['is_locked'] = False
+            
+        return context
+    
+    
+class RealestateRulesView(ListView):
+    template_name = "thank_japan_app/realestate_rules.html"
+    paginate_by = 24
+    
+    def dispatch(self, request, *args, **kwargs):
+        is_premium = request.user.is_authenticated and getattr(request.user.profile, 'is_premium', False)
+        if not is_premium and request.GET.get('page', '1') != '1':
+            url_name, lang_code = get_lang_info(request)
+            return redirect(f"{reverse(url_name)}?lang={lang_code}") 
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        qs = ThankJapanPremium.objects.filter(category="RealEstateRules").order_by('timestamp')
+        is_premium = self.request.user.is_authenticated and getattr(self.request.user.profile, 'is_premium', False)
+        if not is_premium:
+            return qs[:6]
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_premium_qs = ThankJapanPremium.objects.filter(category="RealEstateRules")
+        total_count = all_premium_qs.count()
+        
+        is_premium = self.request.user.is_authenticated and getattr(self.request.user.profile, 'is_premium', False)
+        url_name, lang_code = get_lang_info(self.request)
+        
+        context['lang_code'] = lang_code
+        context['premium_url_name'] = url_name
+
+        if not is_premium:
+            context['is_locked'] = True
+            context['hidden_count'] = max(0, total_count - 6)
+        else:
+            context['is_locked'] = False
+            
+        return context    
+    
+    
+ 
+   
+class PrefectureView(ListView):
+    template_name = "thank_japan_app/prefecture.html"
+    paginate_by = 24
+    
+    def dispatch(self, request, *args, **kwargs):
+        is_premium = request.user.is_authenticated and getattr(request.user.profile, 'is_premium', False)
+        if not is_premium and request.GET.get('page', '1') != '1':
+            url_name, lang_code = get_lang_info(request)
+            return redirect(f"{reverse(url_name)}?lang={lang_code}") 
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        qs = ThankJapanPremium.objects.filter(category="Prefectures").order_by('timestamp')
+        is_premium = self.request.user.is_authenticated and getattr(self.request.user.profile, 'is_premium', False)
+        if not is_premium:
+            return qs[:6]
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        all_premium_qs = ThankJapanPremium.objects.filter(category="Prefectures")
+        total_count = all_premium_qs.count()
+        
+        is_premium = self.request.user.is_authenticated and getattr(self.request.user.profile, 'is_premium', False)
+        url_name, lang_code = get_lang_info(self.request)
+        
+        context['lang_code'] = lang_code
+        context['premium_url_name'] = url_name
+
+        if not is_premium:
+            context['is_locked'] = True
+            context['hidden_count'] = max(0, total_count - 6)
+        else:
+            context['is_locked'] = False
+            
+        return context
+
+
+    
+
+               
+# free detail view
+class CategoryDetailView(DetailView):
+    model = ThankJapanModel
+    template_name = "thank_japan_app/thankjapanmodel_detail.html"
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
+
+    def get(self, request, *args, **kwargs):
+        category = self.kwargs.get('category')
+        slug = self.kwargs.get('slug')
+
+        try:
+            self.object = ThankJapanModel.objects.get(category__iexact=category, slug=slug)
+            return super().get(request, *args, **kwargs)
+        except ThankJapanModel.DoesNotExist:
+            moved_item = ThankJapanModel.objects.filter(
+                category__iexact=category, 
+                slug__icontains=slug
+            ).first()
+
+            if not moved_item:
+                search_key = slug.replace('-', '')[:4]
+                moved_item = ThankJapanModel.objects.filter(
+                    category__iexact=category,
+                    slug__icontains=search_key
+                ).first()
+
+            if moved_item:
+                lang_param = request.GET.get('lang')
+                new_url = reverse('category_detail', kwargs={
+                    'category': moved_item.category.lower(),
+                    'slug': moved_item.slug
+                })
+                if lang_param:
+                    new_url += f"?lang={lang_param}"
+                return redirect(new_url, permanent=True)
+            
+            raise Http404
+
+    def get_queryset(self):
+        category = self.kwargs['category']
+        return ThankJapanModel.objects.filter(category__iexact=category)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        current_item = self.object
+        
+        _, lang_code = get_lang_info(self.request)
+        context['lang_code'] = lang_code
+
+        context['related_items'] = ThankJapanModel.objects.filter(
+            category=current_item.category
+        ).exclude(
+            id=current_item.id
+        ).order_by('?')[:6]
+
+        url_name = CATEGORY_URL_MAP.get(current_item.category, 'category_list')
+        context['category_list_url'] = reverse(url_name)
+        
+        return context
+    
+
+#premium-detail
+
+class ImgPremiumDetailView(DetailView):
+    template_name = "thank_japan_app/thankjapanmodel_detail_premium.html"
+    model = ThankJapanPremium
+    slug_field = 'slug'
+    slug_url_kwarg = 'slug'
+
+    def get_queryset(self):
+        category = self.kwargs.get('category')
+        return ThankJapanPremium.objects.filter(category__iexact=category).order_by('timestamp')
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        is_premium = self.request.user.is_authenticated and getattr(self.request.user.profile, 'is_premium', False)
+        
+        if obj.category not in ["DailyConversation", "slang", "TourismEtiquette" ,"Entertainment"] and not is_premium:
+            free_sample_ids = ThankJapanPremium.objects.filter(
+                category__iexact=obj.category
+            ).order_by('timestamp').values_list('id', flat=True)[:6]
+            
+            if obj.id not in free_sample_ids:
+                raise Http404
+        return obj
+
+    def dispatch(self, request, *args, **kwargs):
+        category = self.kwargs.get('category')
+        slug = self.kwargs.get('slug')
+        
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except Http404:
+            moved_item = ThankJapanPremium.objects.filter(
+                category__iexact=category,
+                slug__icontains=slug
+            ).first()
+
+            if not moved_item:
+                search_key = slug.replace('-', '')[:4]
+                moved_item = ThankJapanPremium.objects.filter(
+                    category__iexact=category,
+                    slug__icontains=search_key
+                ).first()
+
+            if moved_item:
+                is_premium = request.user.is_authenticated and getattr(request.user.profile, 'is_premium', False)
+                if moved_item.category in ["DailyConversation", "slang", "TourismEtiquette" ,"Entertainment"] or is_premium:
+                    lang_param = request.GET.get('lang')
+                    new_url = reverse('detail_premium', kwargs={
+                        'category': moved_item.category,
+                        'slug': moved_item.slug
+                    })
+                    if lang_param:
+                        new_url += f"?lang={lang_param}"
+                    return redirect(new_url, permanent=True)
+                else:
+                    _, lang_code = get_lang_info(request)
+                    return redirect(f"{reverse('premium_info')}?lang={lang_code}")
+            raise Http404
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        current_item = self.object
+        
+        url_name, lang_code = get_lang_info(self.request)
+        context['premium_url_name'] = url_name
+        context['lang_code'] = lang_code
+
+        url_target_name = CATEGORY_URL_MAP.get(current_item.category, 'toppage')
+        try:
+            base_category_url = reverse(url_target_name)
+        except:
+            base_category_url = "/"
+        context['category_list_url'] = f"{base_category_url}?lang={lang_code}"
+
+        is_premium = self.request.user.is_authenticated and getattr(self.request.user.profile, 'is_premium', False)
+        
+        if current_item.category in ["DailyConversation", "slang", "TourismEtiquette" ,"Entertainment"]:
+            context['free_sample_ids'] = ThankJapanPremium.objects.filter(
+                category=current_item.category
+            ).values_list('id', flat=True)
+        else:
+            context['free_sample_ids'] = ThankJapanPremium.objects.filter(
+                category=current_item.category
+            ).order_by('timestamp').values_list('id', flat=True)[:6]
+
+        context['related_items'] = ThankJapanPremium.objects.filter(
+            category=current_item.category
+        ).exclude(id=current_item.id).order_by('?')[:6]
+        
+        return context
+        
+                
+def sitemap_view(request):
+    free_items = ThankJapanModel.objects.all()
+    
+    public_premium_items = []
+    
+    free_samples = ThankJapanPremium.objects.filter(category__in=["DailyConversation", "slang", "TourismEtiquette" ,"Entertainment"]).order_by('timestamp')
+    public_premium_items.extend(list(free_samples))
+    
+    other_categories = ThankJapanPremium.objects.exclude(category__in=["DailyConversation", "slang", "TourismEtiquette" ,"Entertainment"]).values_list('category', flat=True).distinct()
+    
+    for cat in other_categories:
+        samples = ThankJapanPremium.objects.filter(category=cat).order_by('timestamp')[:6]
+        public_premium_items.extend(list(samples))
+        
+    prefectures = ['ishikawa', 'toyama', 'fukui'] 
+
+    languages = [
+        {'code': 'en', 'hreflang': 'en'},
+        {'code': 'ja', 'hreflang': 'ja'},
+        {'code': 'ko', 'hreflang': 'ko'},
+        {'code': 'zh-cn', 'hreflang': 'zh-hans'},
+        {'code': 'zh-hant', 'hreflang': 'zh-hant'},
+        {'code': 'th', 'hreflang': 'th'},
+        {'code': 'vi', 'hreflang': 'vi'},
+        {'code': 'de', 'hreflang': 'de'},
+        {'code': 'fr', 'hreflang': 'fr'},
+        {'code': 'it', 'hreflang': 'it'},
+        {'code': 'es-es', 'hreflang': 'es-es'},
+        {'code': 'es-mx', 'hreflang': 'es-mx'},
+        {'code': 'pt', 'hreflang': 'pt-pt'},
+        {'code': 'pt-br', 'hreflang': 'pt-br'},
+        {'code': 'en-in', 'hreflang': 'en-in'},
+    ]
+
+    context = {
+        'free_items': free_items,
+        'premium_items': public_premium_items,
+        'languages': languages,
+        'prefectures': prefectures,
+    }
+    
+    return render(request, 'sitemap.xml', context, content_type='application/xml')

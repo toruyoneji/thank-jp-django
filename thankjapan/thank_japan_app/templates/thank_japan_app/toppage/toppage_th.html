@@ -1,0 +1,96 @@
+{% extends 'base/base_th.html' %}
+{% block title %}คู่มือภาพญี่ปุ่นที่สมบูรณ์แบบ: เล่น, จัดอันดับ และเรียนรู้ | ThankJapan{% endblock %}
+
+{% block meta %}
+    <meta name="title" content="เก่งคำศัพท์ภาษาญี่ปุ่นผ่านวัฒนธรรม: เกมตอบคำถามภาพ | ThankJapan">
+    <meta name="description" content="สร้างคลังคำศัพท์ภาษาญี่ปุ่นของคุณผ่านภาพที่สวยงามและข้อมูลเชิงลึกทางวัฒนธรรม เก่งคำศัพท์ที่จำเป็นใน 15 ภาษาด้วยเกมตอบคำถาม ทิ้งตำราที่น่าเบื่อไป แล้วเริ่มต้นการเดินทางจาก 'นักเดินทาง' สู่ 'ปรมาจารย์' ได้ฟรี!">
+
+    <meta name="robots" content="index,follow">
+    <meta name="keywords" content="เรียนภาษาญี่ปุ่น, เกมทายคำภาษาญี่ปุ่น, ฮิรางานะ, คันจิ, เกร็ดความรู้ญี่ปุ่น, เกมฟรี, ThankJapan">
+
+    <meta property="og:title" content="เรียนรู้ภาษาและวัฒนธรรมญี่ปุ่น | เกมทายคำฟรี | ThankJapan" />
+    <meta property="og:description" content="เก่งคำศัพท์ภาษาญี่ปุ่น คันจิ และวัฒนธรรมได้ฟรี ทดสอบทักษะและเลื่อนระดับ!" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.thankjapan.com/th/" />
+    <meta property="og:image" content="https://res.cloudinary.com/dotekofm5/image/upload/v1768385674/thankjapan/backgrounds/gx8xbypllgs1qogcsvak.jpg" />
+    <meta property="og:site_name" content="ThankJapan" />
+    <meta property="og:locale" content="th_TH" />
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="เรียนรู้ภาษาและวัฒนธรรมญี่ปุ่น | เกมทายคำฟรี | ThankJapan">
+    <meta name="twitter:description" content="เก่งคำศัพท์ภาษาญี่ปุ่น คันจิ และวัฒนธรรมได้ฟรี ทดสอบทักษะและเลื่อนระดับ!">
+    <meta name="twitter:image" content="https://res.cloudinary.com/dotekofm5/image/upload/v1768385674/thankjapan/backgrounds/gx8xbypllgs1qogcsvak.jpg">
+    <meta name="twitter:site" content="@thankjapan0514">
+{% endblock %}
+
+{% block hreflang_tags %}
+    <link rel="alternate" hreflang="en" href="https://www.thankjapan.com/">
+    <link rel="alternate" hreflang="ja" href="https://www.thankjapan.com/ja/">
+    <link rel="alternate" hreflang="vi" href="https://www.thankjapan.com/vi/">
+    <link rel="alternate" hreflang="en-IN" href="https://www.thankjapan.com/en-in/">
+    <link rel="alternate" hreflang="fr" href="https://www.thankjapan.com/fr/">
+    <link rel="alternate" hreflang="it" href="https://www.thankjapan.com/it/">
+    <link rel="alternate" hreflang="pt-PT" href="https://www.thankjapan.com/pt/">
+    <link rel="alternate" hreflang="pt-BR" href="https://www.thankjapan.com/pt-br/">
+    <link rel="alternate" hreflang="zh-Hant" href="https://www.thankjapan.com/zh-hant/">
+    <link rel="alternate" hreflang="ko" href="https://www.thankjapan.com/ko/">
+    <link rel="alternate" hreflang="es-ES" href="https://www.thankjapan.com/es-es/">
+    <link rel="alternate" hreflang="es-MX" href="https://www.thankjapan.com/es-mx/">
+    <link rel="alternate" hreflang="de" href="https://www.thankjapan.com/de/">
+    <link rel="alternate" hreflang="th" href="https://www.thankjapan.com/th/">
+    <link rel="alternate" hreflang="zh-CN" href="https://www.thankjapan.com/zh-cn/">
+    <link rel="alternate" hreflang="x-default" href="https://www.thankjapan.com/">
+{% endblock %}
+
+{% block content %}
+{% if bonus_received %}
+<div id="bonus-toast" style="position: fixed; top: 100px; left: 50%; transform: translateX(-50%); background: rgba(26, 26, 26, 0.95); color: #d4af37; border: 2px solid #d4af37; padding: 12px 30px; border-radius: 50px; z-index: 11000; font-weight: bold; box-shadow: 0 4px 20px rgba(0,0,0,0.5); white-space: nowrap; display: flex; align-items: center; gap: 10px;">
+    <span>✨</span> โบนัสล็อกอินรายวัน: +1pt 💎
+</div>
+{% endif %}
+
+{% if show_guest_alert %}
+<div id="guest-bonus-alert" style="position: fixed; top: 100px; left: 50%; transform: translateX(-50%); background: #f0f7ff; color: #0056b3; border: 2px solid #0056b3; padding: 12px 25px; border-radius: 50px; z-index: 11000; font-weight: bold; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 92%; max-width: 400px; display: none; align-items: center; gap: 10px;">
+    <span style="font-size: 1.2rem;">💎</span>
+    <div style="flex: 1; line-height: 1.3; font-size: 0.85rem;">
+        ยินดีต้อนรับ! สมัครสมาชิกเพื่อรับโบนัสพอยต์ฟรี! ✨<br>
+        <a href="{% url 'player_register' %}?next={{ request.path }}&lang=th" style="color: #0056b3; text-decoration: underline; font-size: 0.9rem;">สมัครสมาชิกและรับ 1pt</a>
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toast = document.getElementById('bonus-toast');
+    if (toast) {
+        setTimeout(() => {
+            toast.style.transition = "all 0.6s ease";
+            toast.style.opacity = "0";
+            toast.style.top = "80px";
+            setTimeout(() => toast.remove(), 600);
+        }, 5000);
+    }
+
+    const guestAlert = document.getElementById('guest-bonus-alert');
+    if (guestAlert) {
+        setTimeout(() => {
+            guestAlert.style.display = "flex";
+            guestAlert.style.opacity = "0";
+            guestAlert.style.transition = "all 0.6s ease";
+            
+            setTimeout(() => {
+                guestAlert.style.opacity = "1";
+            }, 10);
+
+            setTimeout(() => {
+                guestAlert.style.opacity = "0";
+                guestAlert.style.top = "80px";
+                setTimeout(() => guestAlert.remove(), 600);
+            }, 8000);
+
+        }, 10000);
+    }
+});
+</script>
+{% include 'top-main_th.html' %}
+{% endblock %}

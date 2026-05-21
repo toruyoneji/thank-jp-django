@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="{{ lang_code|default:'en' }}" translate="no">
+{% load static %}
+<head>
+    {% include 'css.html' %}
+    {% include 'pwa_parts.html' %}
+    <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="icon" href="https://res.cloudinary.com/dotekofm5/image/upload/w_96,h_96,c_fill/v1768197979/thankjapan/backgrounds/lzqkopi7hngponvt8ekw.png" sizes="96x96" type="image/png">
+    <link rel="apple-touch-icon" href="https://res.cloudinary.com/dotekofm5/image/upload/w_180,h_180,c_fill/v1768197979/thankjapan/backgrounds/lzqkopi7hngponvt8ekw.png">
+
+    {% block meta %}
+    <meta name="title" content="Master Japanese Vocabulary through Culture: Visual Quiz Games | ThankJapan" />
+    <meta name="description" content="{% block description %}Build your Japanese vocabulary through culture and visual quiz games. Master essential words in 15 languages without boring textbooks.{% endblock %}" />
+    <meta name="robots" content="index,follow">
+    <meta name="keywords" content="Japanese vocabulary, Japanese culture, learn Japanese words, Japanese quiz, Japanese food, ThankJapan">
+
+    
+    <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% if lang_code %}?lang={{ lang_code }}{% endif %}{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+
+    <link rel="alternate" hreflang="x-default" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% if page_obj and page_obj.number > 1 %}?page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="en" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=en{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="ja" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=ja{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="de" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=de{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="fr" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=fr{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="it" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=it{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="es-ES" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=es-es{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="es-MX" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=es-mx{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="ko" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=ko{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="pt-PT" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=pt{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="pt-BR" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=pt-br{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="vi" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=vi{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="th" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=th{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="zh-Hant" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=zh-hant{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+    <link rel="alternate" hreflang="zh-Hans" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}?lang=zh-cn{% if page_obj and page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}" />
+
+
+    <meta property="og:title" content="{% block og_title %}Discover Japan: Culture, Food & Fun Games{% endblock %}" />
+    <meta property="og:description" content="{% block og_description %}Japanese introduction site.{% endblock %}" />
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://res.cloudinary.com/dotekofm5/image/upload/v1768385674/thankjapan/backgrounds/gx8xbypllgs1qogcsvak.jpg" />
+
+    <meta property="og:site_name" content="ThankJapan" />
+    <meta property="og:locale" content="en_US"  />
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Discover Japan: Culture, Food & Fun Games">
+    <meta name="twitter:description" content="This site introduces Japanese culture, food, and language to the world.">
+    <meta name="twitter:image" content="https://res.cloudinary.com/dotekofm5/image/upload/v1768385674/thankjapan/backgrounds/gx8xbypllgs1qogcsvak.jpg">
+    <meta name="twitter:site" content="@thankjapan0514">
+
+    {% endblock %}
+
+    <title>{% block title %}{% endblock %}</title>
+
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { 
+        background-color: #111 !important; 
+    }
+    html, body { width: 100%; overflow-x: hidden; }
+    body {
+        font-family: 'Zen Antique', 'Shippori Mincho', 'Noto Serif JP', serif;
+        background-color: #f3f4f6;
+        padding-top: 80px; 
+        background-image: repeating-radial-gradient(circle at 50% 30%, transparent 0, transparent 10px, rgba(0,0,0,0.03) 11px, rgba(0,0,0,0.03) 12px);
+    }
+
+    header.nav-bar {
+        position: fixed; top: 0; left: 0; width: 100%; min-height: 80px;
+        background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px);
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 30px; z-index: 9999; border-bottom: 4px solid #7a7a7a;
+    }
+    .logo-link { color: white; text-decoration: none; font-weight: bold; font-size: 1.6rem; white-space: nowrap; }
+    .sns-buttons { display: flex; gap: 10px; }
+    .sns-buttons a { color: #fff; font-size: 1.1rem; text-decoration: none; }
+    nav { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+
+    .auth-section { display: flex; align-items: center; gap: 10px; }
+    .user-info, .guest-info { display: flex; align-items: center; gap: 10px; }
+    .user-name { color: #ffffff !important; font-weight: bold; font-size: 0.9rem; white-space: nowrap; text-shadow: 1px 1px 2px #000; }
+    .premium-badge { background: linear-gradient(45deg, #ffd700, #ffa500); color: #000 !important; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; }
+    .upgrade-link { color: #f1c40f !important; text-decoration: none; font-size: 0.8rem; font-weight: bold; border: 1px solid #f1c40f; padding: 2px 8px; border-radius: 10px; }
+    .auth-btn { text-decoration: none; font-size: 0.8rem; padding: 6px 14px; border-radius: 20px; font-weight: bold; border: 1px solid #fff; color: #fff !important; white-space: nowrap; transition: 0.3s; }
+    .signup { background-color: #e67e22; border: none; }
+
+    .dropbtn, .game-link { color: #eee; background: none; border: none; font-size: 0.9rem; cursor: pointer; text-decoration: none; padding: 10px; }
+    .dropdown { position: relative; }
+    .dropdown-content { 
+        display: none; 
+        position: absolute; 
+        top: 100%; 
+        left: 0; 
+        background-color: #1a1a1a; 
+        min-width: 160px; 
+        border-radius: 8px; 
+        z-index: 1000; 
+        max-height: 300px; 
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch; 
+    }
+
+    .dropdown-content a { color: #eee; padding: 12px 15px; display: block; text-decoration: none; font-size: 0.9rem; border-bottom: 1px solid #333; }
+
+    .dropdown:hover .dropdown-content { display: block; }
+
+    .dropdown-content.show { display: block; }
+
+    .hero {
+        margin-top: 0 !important; width: 100%; height: 750px; 
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.3)), url("https://res.cloudinary.com/dotekofm5/image/upload/v1761402106/thankjapan/backgrounds/jtbdzjsksgbgehuxl954.jpg");
+        background-position: center 30%; background-size: cover; color: #fff; text-align: center;
+        mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    }
+    .hero h1 { font-size: 3.5rem; letter-spacing: 8px; text-shadow: 0 2px 20px rgba(0,0,0,0.8); }
+    .hero p { font-size: 1.2rem; background: rgba(0,0,0,0.5); padding: 10px 30px; border-radius: 50px; margin: 20px 0; }
+
+    .explore-btn {
+        background: linear-gradient(135deg, #fff1b8, #ffd700, #e6b800, #d4af37);
+        color: #000; padding: 18px 80px; border-radius: 50px; font-weight: 700; font-size: 1.3rem;
+        letter-spacing: 2px; text-decoration: none; display: inline-block; box-shadow: 0 6px 18px rgba(212, 175, 55, 0.6);
+    }
+    .play-game-button { background: #556b2f; color: #fff; padding: 15px 30px; border-radius: 50px; text-decoration: none; font-weight: bold; display: inline-block; }
+
+    footer { background: #1f1f1f; text-align: center; padding: 60px 20px; font-size: 0.85rem; color: #777; }
+    .footer-links a { color: #777; text-decoration: none; margin: 0 10px; }
+
+    .header-score-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #1a1a1a;
+        border: 1px solid #d4af37;
+        padding: 3px 12px;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: 0.3s;
+        margin-right: 8px;
+    }
+
+    .header-score-badge:hover {
+        background: #d4af37;
+    }
+
+    .rank-emoji {
+        font-size: 1.1rem;
+    }
+
+    .score-text {
+        color: #d4af37;
+        font-weight: 800;
+        font-size: 0.95rem;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .header-score-badge:hover .score-text {
+        color: #1a1a1a;
+    }
+
+    .header-score-badge small {
+        font-size: 0.65rem;
+        margin-left: 1px;
+    }
+
+    .header-score-badge.guest {
+        border-style: dashed;
+        opacity: 0.8;
+    }
+
+    @media screen and (max-width: 1024px) {
+        body { padding-top: 140px !important; }
+        header.nav-bar { flex-direction: column; padding: 10px; gap: 8px; }
+        .logo, .auth-section, .sns-buttons, nav { width: 100%; justify-content: center; margin: 0; }
+        .auth-section { order: -1; padding-bottom: 5px; border-bottom: 1px solid #333; }
+        .main, .hero, .container, .category-container, .game-container, #game-area, [class*="main"], [class*="container"] {
+            margin-left: 0 !important; margin-right: 0 !important; width: 100% !important; max-width: 100% !important; left: 0 !important;
+        }
+
+        .header-score-badge {
+            margin-bottom: 5px;
+            padding: 2px 10px;
+        }
+    }
+
+    @media screen and (max-width: 480px) {
+    
+        body { 
+            padding-top: 100px !important; 
+        }
+
+    
+        header.nav-bar {
+            height: auto !important;
+            min-height: 100px !important;
+            max-height: none !important;
+            padding: 15px 0px 5px 0px !important; 
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            overflow: visible !important;
+        }
+
+    
+        .sns-buttons { 
+            display: none !important; 
+        }
+
+    
+        .logo {
+            text-align: center !important;
+            width: 100% !important;
+            margin-top: 5px !important;
+            margin-bottom: 5px !important;
+        }
+
+        .logo-link {
+            font-size: 1.4rem !important;
+        }
+
+    
+        .auth-section, nav {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            margin: 0 !important;
+        }
+
+    
+        .user-name {
+            display: inline !important;
+            font-size: 0.9rem !important;
+            color: #fff !important;
+            margin: 0 5px !important;
+        }
+
+        .header-score-badge {
+            padding: 3px 10px !important;
+            transform: none !important;
+        }
+
+    
+        .hero, .main2, .container, .category-container {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+            border-top: none !important;
+        }
+    }
+
+    .cookie-consent-banner {
+        position: fixed; bottom: 0; left: 0; width: 100%; background-color: rgba(0,0,0,0.95);
+        color: #eee; padding: 15px; z-index: 10001; display: none; flex-direction: column; align-items: center;
+    }
+    .cookie-consent-banner.show { display: flex; }
+    .cookie-consent-btn { padding: 8px 20px; background: #e63946; color: #fff; border: none; border-radius: 5px; margin-top: 10px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+</style>
+ 
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ GA_TRACKING_ID }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', '{{ GA_TRACKING_ID }}');
+
+    </script>
+
+    {% block jsonld %}{% endblock %}
+    
+</head>
+
+<body>
+<header class="nav-bar">
+    <div class="logo">
+        <a class="logo-link" href="{% if lang_code == 'ja' %}{% url 'toppageja' %}{% elif lang_code == 'zh-hant' %}{% url 'toppagezhHANT' %}{% elif lang_code == 'zh-cn' %}{% url 'toppagezhCN' %}{% elif lang_code == 'ko' %}{% url 'toppageko' %}{% elif lang_code == 'it' %}{% url 'toppageit' %}{% elif lang_code == 'fr' %}{% url 'toppagefr' %}{% elif lang_code == 'de' %}{% url 'toppagede' %}{% elif lang_code == 'es-mx' %}{% url 'toppageesMX' %}{% elif lang_code == 'es-es' %}{% url 'toppageesES' %}{% elif lang_code == 'pt' %}{% url 'toppagept' %}{% elif lang_code == 'pt-br' %}{% url 'toppageptBR' %}{% elif lang_code == 'vi' %}{% url 'toppagevi' %}{% elif lang_code == 'th' %}{% url 'toppageth' %}{% elif lang_code == 'en-in' %}{% url 'toppageenIN' %}{% else %}{% url 'toppage' %}{% endif %}">
+            Thank Japan
+        </a>
+    </div>
+
+    <!-- SNSボタン -->
+  <div class="sns-buttons">
+    <a href="https://x.com/thankjapan0514" target="_blank"><i class="fab fa-x twitter"></i></a>
+    <a href="https://www.instagram.com/thankjapan/" target="_blank"><i class="fab fa-instagram"></i></a>
+    <a href="https://www.facebook.com/ToruYone" target="_blank"><i class="fab fa-facebook"></i></a>
+    <a href="https://www.tiktok.com/@thankjapan" target="_blank"><i class="fab fa-tiktok"></i></a>
+    <a href="https://www.pinterest.com/yonetoru/" target="_blank"><i class="fab fa-pinterest"></i></a>
+    <a href="https://www.linkedin.com/shareArticle?mini=true&url=https://www.thankjapan.com" target="_blank" title="Share on LinkedIn"><i class="fab fa-linkedin"></i></a>
+  </div>
+
+
+
+    <nav>
+        <div class="auth-section">
+            {% if user.is_authenticated %}
+                <div class="user-info">
+    
+                    <a href="#" class="header-score-badge" title="Rank: {{ user.profile.rank_info.name }}">
+                        <span class="rank-emoji">{{ user.profile.rank_info.emoji }}</span>
+                        <span class="score-text">💎 {{ user.profile.total_score }}<small>pt</small></span>
+                    </a>
+            
+                    <span class="user-name">
+                        <a href="{% if lang_code == 'ja' %}{% url 'account_settingsja' %}{% elif lang_code == 'fr' %}{% url 'account_settingsfr' %}{% elif lang_code == 'de' %}{% url 'account_settingsde' %}{% elif lang_code == 'it' %}{% url 'account_settingsit' %}{% elif lang_code == 'ko' %}{% url 'account_settingsko' %}{% elif lang_code == 'es-es' %}{% url 'account_settingsesES' %}{% elif lang_code == 'es-mx' %}{% url 'account_settingsesMX' %}{% elif lang_code == 'pt' %}{% url 'account_settingspt' %}{% elif lang_code == 'pt-br' %}{% url 'account_settingsptBR' %}{% elif lang_code == 'vi' %}{% url 'account_settingsvi' %}{% elif lang_code == 'th' %}{% url 'account_settingsth' %}{% elif lang_code == 'zh-hant' %}{% url 'account_settingszhHANT' %}{% elif lang_code == 'zh-cn' %}{% url 'account_settingszhCN' %}{% else %}{% url 'account_settings' %}{% endif %}" 
+                        style="color: white; text-decoration: none;" 
+                        onmouseover="this.style.color='red'" 
+                        onmouseout="this.style.color='white'">
+                        👤 {{ user.username }}</a></span>
+
+                    
+                    <a href="{% if lang_code == 'ja' %}{% url 'player_logout' %}?lang=ja{% elif lang_code == 'zh-hant' %}{% url 'player_logout' %}?lang=zh-hant{% elif lang_code == 'zh-cn' %}{% url 'player_logout' %}?lang=zh-cn{% elif lang_code == 'ko' %}{% url 'player_logout' %}?lang=ko{% elif lang_code == 'de' %}{% url 'player_logout' %}?lang=de{% elif lang_code == 'fr' %}{% url 'player_logout' %}?lang=fr{% elif lang_code == 'es-es' %}{% url 'player_logout' %}?lang=es-es{% elif lang_code == 'es-mx' %}{% url 'player_logout' %}?lang=es-mx{% elif lang_code == 'it' %}{% url 'player_logout' %}?lang=it{% elif lang_code == 'pt' %}{% url 'player_logout' %}?lang=pt{% elif lang_code == 'pt-br' %}{% url 'player_logout' %}?lang=pt-br{% elif lang_code == 'vi' %}{% url 'player_logout' %}?lang=vi{% elif lang_code == 'th' %}{% url 'player_logout' %}?lang=th{% elif lang_code == 'en-in' %}{% url 'player_logout' %}?lang=en-in{% else %}{% url 'player_logout' %}{% endif %}" class="auth-btn logout">
+                        {% if lang_code == 'ja' %}
+                            ログアウト
+                        {% elif lang_code == 'zh-hant' %}
+                            登出
+                        {% elif lang_code == 'zh-cn' %}
+                            登出
+                        {% elif lang_code == 'ko' %}
+                            로그아웃
+                        {% elif lang_code == 'de' %}
+                            Abmelden
+                        {% elif lang_code == 'fr' %}
+                            Déconnexion
+                        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+                            Cerrar sesión
+                        {% elif lang_code == 'it' %}
+                            Esci
+                        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+                            Sair
+                        {% elif lang_code == 'vi' %}
+                            Đăng xuất
+                        {% elif lang_code == 'th' %}
+                            ออกจากระบบ
+                        {% else %}
+                            Logout
+                        {% endif %}
+                    </a>
+                </div>
+            {% else %}
+                <div class="guest-info">
+            
+                    <a href="{% url 'player_register' %}?next={{ request.get_full_path|urlencode }}&lang={{ lang_code }}&from=header_badge" class="header-score-badge guest">
+                        <span class="rank-emoji">🌾</span>
+                        <span class="score-text">💎 0<small>pt</small></span>
+                    </a>
+
+                    <span class="user-name">
+                        {% if lang_code == 'ja' %}
+                            👤 ゲスト
+                        {% elif lang_code == 'zh-hant' %}
+                            👤 訪客
+                        {% elif lang_code == 'zh-cn' %}
+                            👤 访客
+                        {% elif lang_code == 'ko' %}
+                            👤 게스트
+                        {% elif lang_code == 'de' %}
+                            👤 Gast
+                        {% elif lang_code == 'fr' %}
+                            👤 Invité
+                        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+                            👤 Invitado
+                        {% elif lang_code == 'it' %}
+                            👤 Ospite
+                        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+                            👤 Visitante
+                        {% elif lang_code == 'vi' %}
+                            👤 Khách
+                        {% elif lang_code == 'th' %}
+                            👤 ผู้เยี่ยมชม
+                        {% else %}
+                            👤 Guest
+                        {% endif %}
+                    </span> 
+                    <a href="{% url 'player_register' %}?next={{ request.get_full_path|urlencode }}&lang={{ lang_code }}&from=header_btn" class="auth-btn login">
+                        {% if lang_code == 'ja' %}新規登録
+                        {% elif lang_code == 'zh-hant' %}註冊
+                        {% elif lang_code == 'zh-cn' %}注册
+                        {% elif lang_code == 'ko' %}회원가입
+                        {% elif lang_code == 'de' %}Registrieren
+                        {% elif lang_code == 'fr' %}S'inscrire
+                        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Registrarse
+                        {% elif lang_code == 'it' %}Iscriviti
+                        {% elif lang_code == 'pt' %}Registar-se
+                        {% elif lang_code == 'pt-br' %}Cadastrar-se
+                        {% elif lang_code == 'vi' %}Đăng ký
+                        {% elif lang_code == 'th' %}ลงทะเบียน
+                        {% elif lang_code == 'en-in' %}Sign Up
+                        {% else %}Sign Up
+                        {% endif %}
+                    </a>
+                    
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="dropdown">
+            <button class="dropbtn">
+                {% if lang_code == 'ja' %}
+                    日本語を学ぶ ▾
+                {% elif lang_code == 'zh-hant' %}
+                    學習日語 ▾
+                {% elif lang_code == 'zh-cn' %}
+                    学习日语 ▾
+                {% elif lang_code == 'ko' %}
+                    일본어 배우기 ▾
+                {% elif lang_code == 'de' %}
+                    Japanisch lernen ▾
+                {% elif lang_code == 'fr' %}
+                    Apprendre le japonais ▾
+                {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+                    Aprender japonés ▾
+                {% elif lang_code == 'it' %}
+                    Impara il giapponese ▾
+                {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+                    Aprender japonês ▾
+                {% elif lang_code == 'vi' %}
+                    Học tiếng Nhật ▾
+                {% elif lang_code == 'th' %}
+                    เรียนภาษาญี่ปุ่น ▾
+                {% else %}
+                    Learn Japanese ▾
+                {% endif %}
+            </button>
+            <div class="dropdown-content">
+                 <a href="{% if lang_code == 'ja' %}{% url 'category_list_ja' %}{% elif lang_code == 'zh-hant' %}{% url 'category_list_zhHant' %}{% elif lang_code == 'zh-cn' %}{% url 'category_list_zhCN' %}{% elif lang_code == 'ko' %}{% url 'category_list_ko' %}{% elif lang_code == 'de' %}{% url 'category_list_de' %}{% elif lang_code == 'fr' %}{% url 'category_list_fr' %}{% elif lang_code == 'es-es' %}{% url 'category_list_esES' %}{% elif lang_code == 'es-mx' %}{% url 'category_list_esMX' %}{% elif lang_code == 'it' %}{% url 'category_list_it' %}{% elif lang_code == 'pt' %}{% url 'category_list_pt' %}{% elif lang_code == 'pt-br' %}{% url 'category_list_ptBR' %}{% elif lang_code == 'vi' %}{% url 'category_list_vi' %}{% elif lang_code == 'th' %}{% url 'category_list_th' %}{% elif lang_code == 'en-in' %}{% url 'category_list_enIN' %}{% else %}{% url 'category_list' %}{% endif %}">
+                    {% if lang_code == 'ja' %}カテゴリー一覧
+                    {% elif lang_code == 'zh-hant' %}類別一覽
+                    {% elif lang_code == 'zh-cn' %}类别一览
+                    {% elif lang_code == 'ko' %}카테고리 목록
+                    {% elif lang_code == 'de' %}Kategorieliste
+                    {% elif lang_code == 'fr' %}Liste des catégories
+                    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Lista de categorías
+                    {% elif lang_code == 'it' %}Elenco categorie
+                    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Lista de categorias
+                    {% elif lang_code == 'vi' %}Danh sách danh mục
+                    {% elif lang_code == 'th' %}รายการหมวดหมู่
+                    {% else %}Category List
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+
+        <a href="{% url 'game_start' %}" class="game-link">
+            {% if lang_code == 'ja' %}
+                ゲーム
+            {% elif lang_code == 'zh-hant' %}
+                遊戲
+            {% elif lang_code == 'zh-cn' %}
+                游戏
+            {% elif lang_code == 'ko' %}
+                게임
+            {% elif lang_code == 'de' %}
+                Spiel
+            {% elif lang_code == 'fr' %}
+                Jeu
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+                Juego
+            {% elif lang_code == 'it' %}
+                Gioco
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+                Jogo
+            {% elif lang_code == 'vi' %}
+                Trò chơi
+            {% elif lang_code == 'th' %}
+                เกม
+            {% else %}
+                Game
+            {% endif %}
+        </a>
+
+        <div class="lang-switch dropdown">
+            <button class="dropbtn">
+                {% if lang_code == 'ja' %}
+                    🌐 言語 ▾
+                {% elif lang_code == 'zh-hant' %}
+                    🌐 語言 ▾
+                {% elif lang_code == 'zh-cn' %}
+                    🌐 语言 ▾
+                {% elif lang_code == 'ko' %}
+                    🌐 언어 ▾
+                {% elif lang_code == 'de' %}
+                    🌐 Sprache ▾
+                {% elif lang_code == 'fr' %}
+                    🌐 Langue ▾
+                {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+                    🌐 Idioma ▾
+                {% elif lang_code == 'it' %}
+                    🌐 Lingua ▾
+                {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+                    🌐 Idioma ▾
+                {% elif lang_code == 'vi' %}
+                    🌐 Ngôn ngữ ▾
+                {% elif lang_code == 'th' %}
+                    🌐 ภาษา ▾
+                {% else %}
+                    🌐 Language ▾
+                {% endif %}
+            </button>
+            <div class="dropdown-content">
+                <a href="{% url 'toppage' %}">English</a>
+                <a href="{% url 'toppageenIN' %}">English (India)</a>
+                <a href="{% url 'toppageit' %}">Italiano</a>
+                <a href="{% url 'toppagefr' %}">Français</a>
+                <a href="{% url 'toppagede' %}">Deutsch</a>
+                <a href="{% url 'toppagept' %}">Português</a>
+                <a href="{% url 'toppageptBR' %}">Português (Brasil)</a>
+                <a href="{% url 'toppageja' %}">日本語</a>
+                <a href="{% url 'toppageesES' %}">Español</a>
+                <a href="{% url 'toppageesMX' %}">Español (México)</a>
+                <a href="{% url 'toppagevi' %}">Tiếng Việt</a>
+                <a href="{% url 'toppageko' %}">한국어</a>
+                <a href="{% url 'toppageth' %}">ภาษาไทย</a>
+                <a href="{% url 'toppagezhHANT' %}">繁體中文</a>
+                <a href="{% url 'toppagezhCN' %}">简体中文</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+{% block content %}{% endblock %}
+
+
+<script>
+function goToCategoryList() {
+    const menuUrl = localStorage.getItem('tj_category_menu_url');
+    if (menuUrl) {
+        
+        window.location.href = menuUrl;
+    } else {
+        window.location.href = "/categories/"; 
+    }
+}
+
+
+</script>
+
+</body>
+</html>
+

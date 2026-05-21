@@ -1,0 +1,1066 @@
+{% extends 'base/basecategory.html' %}
+{% load socialaccount %}
+{% block title %}Register | ThankJapan{% endblock %}
+
+{% block content %}
+
+<style>
+  body {
+    background-color: #e0d9b8;
+    background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px, transparent 1px, transparent 10px);
+    margin: 0;
+  }
+
+  .main2 {
+    max-width: 420px;
+    margin: 90px auto 40px;
+    background: #fffaf0;
+    padding: 40px 35px;
+    border-radius: 4px;
+    border: 4px solid #5d5245;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    font-family: 'Sawarabi Mincho', serif;
+    box-sizing: border-box;
+  }
+
+  h2 {
+    text-align: center;
+    color: #3e4a2a;
+    margin-bottom: 30px;
+    font-weight: 700;
+    border-bottom: 2px solid #8b9d77;
+    display: block;
+    padding-bottom: 10px;
+  }
+
+  ul {
+    padding: 0;
+    margin-bottom: 20px;
+  }
+
+  ul li {
+    list-style: none;
+    background: #fdf2f2;
+    color: #b22d35;
+    padding: 10px 15px;
+    border-left: 5px solid #b22d35;
+    margin-bottom: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  form p {
+    margin-bottom: 18px;
+  }
+
+  form label {
+    display: block;
+    font-weight: 600;
+    color: #5d5245;
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+  }
+
+  form input, form select {
+    width: 100%;
+    padding: 14px 15px;
+    border: 1px solid #a8a095;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    background-color: #fdfdfd;
+  }
+
+  form input:focus, form select:focus {
+    outline: none;
+    border-color: #5d6d3e;
+    box-shadow: 0 0 8px rgba(93, 109, 62, 0.3);
+  }
+
+  button {
+    width: 100%;
+    padding: 16px 0;
+    background: #5d6d3e;
+    border: none;
+    border-radius: 30px;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #3e4a2a;
+    transition: all 0.2s ease;
+    margin-top: 10px;
+  }
+
+  button:hover {
+    background: #4e5b34;
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #3e4a2a;
+  }
+
+  p {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 0.95rem;
+    color: #5d5245;
+  }
+
+  p a {
+    color: #b22d35;
+    font-weight: bold;
+    text-decoration: none;
+  }
+
+  .btn-more {
+    display: inline-block;
+    background: #ffb347;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 20px;
+    transition: background 0.3s;
+  }
+  .btn-more:hover {
+    background: #ff9642;
+  }
+
+ @media (max-width: 900px) {
+    .main {
+      margin-left: 0 !important;
+      width: 100% !important;
+    }
+
+    .main2 {
+      width: 92% !important;
+      max-width: 400px !important;
+      margin: 130px auto 40px !important;
+      padding: 30px 20px !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .main2 {
+      margin-top: 100px !important;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .main2 {
+      margin-top: 150px !important;
+    }
+  }
+
+</style>
+
+<div class="main2">
+  <h2>
+    {% if lang_code == 'ja' %}アカウント作成
+    {% elif lang_code == 'zh-hant' %}建立帳號
+    {% elif lang_code == 'zh-cn' %}创建账户
+    {% elif lang_code == 'ko' %}계정 생성
+    {% elif lang_code == 'de' %}Konto erstellen
+    {% elif lang_code == 'fr' %}Créer un compte
+    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Crear una cuenta
+    {% elif lang_code == 'it' %}Crea un account
+    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Criar uma conta
+    {% elif lang_code == 'vi' %}Tạo tài khoản
+    {% elif lang_code == 'th' %}สร้างบัญชี
+    {% else %}Create an Account
+    {% endif %}
+  </h2>
+
+  <!-- Google Login Section Start -->
+<div style="margin-bottom: 25px; text-align: center;">
+  <a href="{% provider_login_url 'google' %}" style="
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    color: #757575;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    padding: 10px 16px;
+    text-decoration: none;
+    font-family: 'Roboto', arial, sans-serif;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    transition: background-color 0.2s;
+  " onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='#ffffff'">
+    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" viewBox="0 0 48 48" style="margin-right: 10px;">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+    </svg>
+    <span>
+      {% if lang_code == 'ja' %}Googleで登録
+      {% elif lang_code == 'zh-hant' %}使用 Google 註冊
+      {% elif lang_code == 'zh-cn' %}使用 Google 注册
+      {% elif lang_code == 'ko' %}Google 계정으로 가입
+      {% elif lang_code == 'de' %}Mit Google registrieren
+      {% elif lang_code == 'fr' %}S'inscrire avec Google
+      {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Registrarse con Google
+      {% elif lang_code == 'it' %}Registrati con Google
+      {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Cadastrar com Google
+      {% elif lang_code == 'vi' %}Đăng ký bằng Google
+      {% elif lang_code == 'th' %}ลงทะเบียนด้วย Google
+      {% else %}Sign up with Google
+      {% endif %}
+    </span>
+  </a>
+
+  <!-- 区切り線 -->
+  <div style="margin-top: 20px; display: flex; align-items: center; color: #888; font-size: 0.9em;">
+    <div style="flex: 1; height: 1px; background: #ddd;"></div>
+    <div style="padding: 0 10px;">
+        {% if lang_code == 'ja' %}または
+        {% elif lang_code == 'zh-hant' %}或
+        {% elif lang_code == 'zh-cn' %}或
+        {% elif lang_code == 'ko' %}또는
+        {% elif lang_code == 'de' %}oder
+        {% elif lang_code == 'fr' %}ou
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}o
+        {% elif lang_code == 'it' %}o
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}ou
+        {% elif lang_code == 'vi' %}hoặc
+        {% elif lang_code == 'th' %}หรือ
+        {% else %}or
+        {% endif %}
+    </div>
+    <div style="flex: 1; height: 1px; background: #ddd;"></div>
+  </div>
+</div>
+<!-- Google Login Section End -->
+
+  {% if messages %}
+  <ul style="padding: 0; list-style: none;">
+    {% for message in messages %}
+      <li style="color: #d93025; font-size: 0.9em; margin-bottom: 10px;">
+        {% if lang_code == 'ja' %}
+            {% if "already taken" in message.message %}このユーザー名は既に使用されています。
+            {% elif "already registered" in message.message %}このメールアドレスは既に登録されています。
+            {% elif "Invalid username" in message.message %}ユーザー名またはパスワードが正しくありません。
+            {% elif "Account created" in message.message %}アカウントが作成されました！ログインしてください。
+            {% elif "Logged out" in message.message.message %}ログアウトしました。
+            {% else %}{{ message }}{% endif %}
+
+        {% elif lang_code == 'zh-hant' %}
+            {% if "already taken" in message.message %}此用戶名稱已被使用。
+            {% elif "already registered" in message.message %}此電子郵件地址已註冊。
+            {% elif "Invalid username" in message.message %}用戶名或密碼無效。
+            {% elif "Account created" in message.message %}帳號已建立！請登入。
+            {% elif "Logged out" in message.message %}您已登出。
+            {% else %}{{ message }}{% endif %}
+
+        {% elif lang_code == 'zh-cn' %}
+            {% if "already taken" in message.message %}此用户名已被使用。
+            {% elif "already registered" in message.message %}此电子邮件地址已注册。
+            {% elif "Invalid username" in message.message %}用户名或密码无效。
+            {% elif "Account created" in message.message %}账号已建立！请登录。
+            {% elif "Logged out" in message.message %}您已登出。
+            {% else %}{{ message }}{% endif %}
+
+        {% elif lang_code == 'ko' %}
+            {% if "already taken" in message.message %}이미 사용 중인 사용자 이름입니다.
+            {% elif "already registered" in message.message %}이미 등록된 이메일 주소입니다.
+            {% elif "Invalid username" in message.message %}사용자 이름 또는 비밀번호가 잘못되었습니다.
+            {% elif "Account created" in message.message %}계정이 생성되었습니다! 로그인해 주세요.
+            {% elif "Logged out" in message.message %}로그아웃되었습니다.
+            {% else %}{{ message }}{% endif %}
+
+        {% elif lang_code == 'de' %}
+            {% if "already taken" in message.message %}Dieser Benutzername ist bereits vergeben.
+            {% elif "already registered" in message.message %}Diese E-Mail-Adresse ist bereits registriert.
+            {% elif "Invalid username" in message.message %}Benutzername oder Passwort ist ungültig.
+            {% elif "Account created" in message.message %}Konto erstellt! Bitte melden Sie sich an.
+            {% elif "Logged out" in message.message %}Abmeldung erfolgreich.
+            {% else %}{{ message }}{% endif %}
+
+        {% elif lang_code == 'fr' %}
+            {% if "already taken" in message.message %}Ce nom d'utilisateur est déjà utilisé.
+            {% elif "already registered" in message.message %}Cette adresse e-mail est déjà enregistrée.
+            {% elif "Invalid username" in message.message %}Nom d'utilisateur ou mot de passe invalide.
+            {% elif "Account created" in message.message %}Compte créé ! Veuillez vous connecter.
+            {% elif "Logged out" in message.message %}Vous avez été déconnecté.
+            {% else %}{{ message }}{% endif %}
+
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+            {% if "already taken" in message.message %}Este nombre de usuario ya está en uso.
+            {% elif "already registered" in message.message %}Esta dirección de correo electrónico ya está registrada.
+            {% elif "Invalid username" in message.message %}Usuario o contraseña no válidos.
+            {% elif "Account created" in message.message %}¡Cuenta creada! Por favor, inicia sesión.
+            {% elif "Logged out" in message.message %}Has cerrado sesión.
+            {% else %}{{ message }}{% endif %}
+
+        {% elif lang_code == 'it' %}
+            {% if "already taken" in message.message %}Questo nome utente è già in uso.
+            {% elif "already registered" in message.message %}Questo indirizzo email è già registrato.
+            {% elif "Invalid username" in message.message %}Nome utente o password non validi.
+            {% elif "Account created" in message.message %}Account creato! Effettua l'accesso.
+            {% elif "Logged out" in message.message %}Sei stato disconnesso.
+            {% else %}{{ message }}{% endif %}
+
+        {% elif lang_code == 'pt' %}
+            {% if "already taken" in message.message %}Este nome de utilizador já está em uso.
+            {% elif "already registered" in message.message %}Este endereço de e-mail já está registado.
+            {% elif "Invalid username" in message.message %}Nome de utilizador ou palavra-passe inválidos.
+            {% elif "Account created" in message.message %}Conta criada! Por favor, inicie sessão.
+            {% elif "Logged out" in message.message %}Sessão encerrada.
+            {% else %}{{ message }}{% endif %}
+
+        {% elif lang_code == 'pt-br' %}
+            {% if "already taken" in message.message %}Este nome de usuário já está em uso.
+            {% elif "already registered" in message.message %}Este endereço de e-mail já está cadastrado.
+            {% elif "Invalid username" in message.message %}Nome de usuário ou senha inválidos.
+            {% elif "Account created" in message.message %}Conta criada! Por favor, faça login.
+            {% elif "Logged out" in message.message %}Você saiu com sucesso.
+            {% else %}{{ message }}{% endif %}
+
+        {% elif lang_code == 'vi' %}
+            {% if "already taken" in message.message %}Tên người dùng này đã được sử dụng.
+            {% elif "already registered" in message.message %}Địa chỉ email này đã được đăng ký.
+            {% elif "Invalid username" in message.message %}Tên người dùng hoặc mật khẩu không hợp lệ.
+            {% elif "Account created" in message.message %}Tài khoản đã được tạo! Vui lòng đăng nhập.
+            {% elif "Logged out" in message.message %}Bạn đã đăng xuất.
+            {% else %}{{ message }}{% endif %}
+
+        {% elif lang_code == 'th' %}
+            {% if "already taken" in message.message %}ชื่อผู้ใช้นี้ถูกใช้งานแล้ว
+            {% elif "already registered" in message.message %}อีเมลนี้ถูกลงทะเบียนแล้ว
+            {% elif "Invalid username" in message.message %}ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง
+            {% elif "Account created" in message.message %}สร้างบัญชีเรียบร้อยแล้ว! กรุณาเข้าสู่ระบบ
+            {% elif "Logged out" in message.message %}คุณออกจากระบบแล้ว
+            {% else %}{{ message }}{% endif %}
+
+        {% elif lang_code == 'en-in' %}
+            {% if "already taken" in message.message %}This username is already taken.
+            {% elif "already registered" in message.message %}This email address is already registered.
+            {% elif "Invalid username" in message.message %}Invalid username or password.
+            {% elif "Account created" in message.message %}Account created! Please log in.
+            {% else %}{{ message }}{% endif %}
+
+        {% else %}
+            {{ message }}
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <input type="hidden" name="guest_score" value="{{ guest_score }}">
+    
+    <p>
+      <label for="id_username">
+        {% if lang_code == 'ja' %}ユーザー名:
+        {% elif lang_code == 'zh-hant' %}用戶名稱:
+        {% elif lang_code == 'zh-cn' %}用户名:
+        {% elif lang_code == 'ko' %}사용자 이름:
+        {% elif lang_code == 'de' %}Benutzername:
+        {% elif lang_code == 'fr' %}Nom d'utilisateur :
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Nombre de usuario:
+        {% elif lang_code == 'it' %}Nome utente:
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Nome de usuário:
+        {% elif lang_code == 'vi' %}Tên người dùng:
+        {% elif lang_code == 'th' %}ชื่อผู้ใช้:
+        {% else %}Username:
+        {% endif %}
+      </label>
+
+      <input type="text" name="username" id="id_username" required 
+       placeholder="{% if lang_code == 'ja' %}ユーザー名を入力{% elif lang_code == 'zh-hant' %}輸入用戶名稱{% elif lang_code == 'zh-cn' %}输入用户名{% elif lang_code == 'ko' %}사용자 이름 입력{% elif lang_code == 'de' %}Benutzername eingeben{% elif lang_code == 'fr' %}Entrez votre nom d'utilisateur{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Introduce tu nombre de usuario{% elif lang_code == 'it' %}Inserisci il tuo nome utente{% elif lang_code == 'pt' or lang_code == 'pt-br' %}Digite seu nome de usuário{% elif lang_code == 'vi' %}Nhập tên người dùng{% elif lang_code == 'th' %}ป้อนชื่อผู้ใช้ของคุณ{% else %}Enter your username{% endif %}" 
+       value="{{ form.username.value|default:'' }}"
+       style="width: 100%; padding: 8px; border: 1px solid #a6a6a6; border-radius: 3px;">
+      {% for error in form.username.errors %}
+				<div style="color: #d93025; font-size: 0.85em;">
+
+					{% if "required" in error %}
+
+						{% if lang_code == 'ja' %}
+							ユーザー名は必須です。
+						{% elif lang_code == 'zh-hant' %}
+							使用者名稱為必填。
+						{% elif lang_code == 'zh-cn' %}
+							用户名为必填。
+						{% elif lang_code == 'ko' %}
+							사용자 이름은 필수입니다.
+						{% elif lang_code == 'de' %}
+							Benutzername ist erforderlich.
+						{% elif lang_code == 'fr' %}
+							Le nom d'utilisateur est obligatoire.
+						{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+							El nombre de usuario es obligatorio.
+						{% elif lang_code == 'it' %}
+							Il nome utente è obbligatorio.
+						{% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+							O nome de usuário é obrigatório.
+						{% elif lang_code == 'vi' %}
+							Tên người dùng là bắt buộc.
+						{% elif lang_code == 'th' %}
+							จำเป็นต้องกรอกชื่อผู้ใช้
+						{% else %}
+							This field is required.
+						{% endif %}
+
+					{% elif "already taken" in error %}
+
+						{% if lang_code == 'ja' %}
+							このユーザー名は既に使用されています。
+						{% elif lang_code == 'zh-hant' %}
+							此用戶名稱已被使用。
+						{% elif lang_code == 'zh-cn' %}
+							此用户名已被使用。
+						{% elif lang_code == 'ko' %}
+							이미 사용 중인 사용자 이름입니다.
+						{% elif lang_code == 'de' %}
+							Dieser Benutzername ist bereits vergeben.
+						{% elif lang_code == 'fr' %}
+							Ce nom d’utilisateur est déjà utilisé.
+						{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+							Este nombre de usuario ya está en uso.
+						{% elif lang_code == 'it' %}
+							Questo nome utente è già in uso.
+						{% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+							Este nome de usuário já está em uso.
+						{% elif lang_code == 'vi' %}
+							Tên người dùng này đã được sử dụng.
+						{% elif lang_code == 'th' %}
+							ชื่อผู้ใช้นี้ถูกใช้งานแล้ว
+						{% else %}
+							This username is already taken.
+						{% endif %}
+
+					{% elif "letters and underscores" in error %}
+
+						{% if lang_code == 'ja' %}
+							ユーザー名は英字とアンダースコア（_）のみ使用できます。
+						{% elif lang_code == 'zh-hant' %}
+							用戶名稱只能包含英文字母和底線（_）。
+						{% elif lang_code == 'zh-cn' %}
+							用户名只能包含英文字母和下划线（_）。
+						{% elif lang_code == 'ko' %}
+							사용자 이름은 영문자와 언더스코어(_)만 사용할 수 있습니다.
+						{% elif lang_code == 'de' %}
+							Der Benutzername darf nur Buchstaben und Unterstriche (_) enthalten.
+						{% elif lang_code == 'fr' %}
+							Le nom d’utilisateur ne peut contenir que des lettres et des underscores (_).
+						{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+							El nombre de usuario solo puede contener letras y guiones bajos (_).
+						{% elif lang_code == 'it' %}
+							Il nome utente può contenere solo lettere e underscore (_).
+						{% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+							O nome de usuário só pode conter letras e sublinhado (_).
+						{% elif lang_code == 'vi' %}
+							Tên người dùng chỉ được chứa chữ cái và dấu gạch dưới (_).
+						{% elif lang_code == 'th' %}
+							ชื่อผู้ใช้สามารถใช้ได้เฉพาะตัวอักษรและขีดล่าง (_)
+						{% else %}
+							Only letters and underscores are allowed.
+						{% endif %}
+
+					{% elif "Invalid characters" in error or "Only letters" in error %}
+    					{% if lang_code == 'ja' %}使用できない文字が含まれています（英字とアンダースコアのみ使用可能です）。
+    					{% elif lang_code == 'zh-hant' %}包含無效字元（僅限英文字母和底線）。
+    					{% elif lang_code == 'zh-cn' %}包含无效字符（仅限英文字母和下划线）。
+    					{% elif lang_code == 'ko' %}잘못된 문자가 포함되어 있습니다 (영문자와 밑줄만 사용 가능합니다).
+    					{% elif lang_code == 'de' %}Enthält ungültige Zeichen (nur Buchstaben und Unterstriche erlaubt).
+    					{% elif lang_code == 'fr' %}Contient des caractères non valides (seules les lettres et les underscores sont autorisés).
+    					{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Contiene caracteres no válidos (solo se permiten letras y guiones bajos).
+    					{% elif lang_code == 'it' %}Contiene caratteri non validi (sono ammessi solo lettere e underscore).
+    					{% elif lang_code == 'pt' %}Contém caracteres inválidos (apenas letras e sublinhados são permitidos).
+    					{% elif lang_code == 'pt-br' %}Contém caracteres inválidos (apenas letras e sublinhados são permitidos).
+    					{% elif lang_code == 'vi' %}Chứa các ký tự không hợp lệ (chỉ cho phép chữ cái và dấu gạch dưới).
+    					{% elif lang_code == 'th' %}มีตัวอักษรที่ไม่ถูกต้อง (อนุญาตให้ใช้เฉพาะตัวอักษรและขีดล่างเท่านั้น)
+    					{% elif lang_code == 'en-in' %}Invalid characters included (only letters and underscores are allowed).
+    					{% else %}Invalid characters included (only letters and underscores are allowed).
+    					{% endif %}
+
+					{% else %}
+						{{ error }}
+					{% endif %}
+
+				</div>
+      {% endfor %}
+
+    </p>
+
+    <p>
+      <label for="id_email">
+        {% if lang_code == 'ja' %}メールアドレス:
+        {% elif lang_code == 'zh-hant' %}電子郵件地址:
+        {% elif lang_code == 'zh-cn' %}电子邮件地址:
+        {% elif lang_code == 'ko' %}이메일 주소:
+        {% elif lang_code == 'de' %}E-Mail-Adresse:
+        {% elif lang_code == 'fr' %}Adresse e-mail :
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Correo electrónico:
+        {% elif lang_code == 'it' %}Indirizzo e-mail:
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Endereço de e-mail:
+        {% elif lang_code == 'vi' %}Địa chỉ email:
+        {% elif lang_code == 'th' %}ที่อยู่อีเมล:
+        {% else %}Email Address:
+        {% endif %}
+      </label>
+      
+      <input type="email" name="email" id="id_email" required 
+       placeholder="{% if lang_code == 'ja' %}メールアドレスを入力{% elif lang_code == 'zh-hant' %}請輸入電子郵件地址{% elif lang_code == 'zh-cn' %}输入电子邮件地址{% elif lang_code == 'ko' %}이메일 주소 입력{% elif lang_code == 'de' %}E-Mail-Adresse eingeben{% elif lang_code == 'fr' %}Entrez votre adresse e-mail{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Introduce tu correo electrónico{% elif lang_code == 'it' %}Inserisci il tuo indirizzo email{% elif lang_code == 'pt' %}Introduza o seu e-mail{% elif lang_code == 'pt-br' %}Digite seu e-mail{% elif lang_code == 'vi' %}Nhập địa chỉ email của bạn{% elif lang_code == 'th' %}ป้อนที่อยู่อีเมลของคุณ{% elif lang_code == 'en-in' %}Enter email address{% else %}Enter email address{% endif %}" 
+       value="{{ form.email.value|default:'' }}"
+       style="width: 100%; padding: 8px; border: 1px solid #a6a6a6; border-radius: 3px;">
+        
+      {% for error in form.email.errors %}
+				<div style="color: #d93025;">
+					{% if lang_code == 'ja' %}
+						{% if "valid email" in error %}
+							正しいメールアドレスを入力してください。
+						{% elif "required" in error %}
+							メールアドレスは必須です。
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'zh-hant' %}
+						{% if "valid email" in error %}
+							請輸入有效的電子郵件地址。
+						{% elif "required" in error %}
+							電子郵件為必填項目。
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'zh-cn' %}
+						{% if "valid email" in error %}
+							请输入有效的电子邮箱地址。
+						{% elif "required" in error %}
+							电子邮箱为必填项。
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'ko' %}
+						{% if "valid email" in error %}
+							유효한 이메일 주소를 입력하세요.
+						{% elif "required" in error %}
+							이메일은 필수 항목입니다.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'de' %}
+						{% if "valid email" in error %}
+							Bitte geben Sie eine gültige E-Mail-Adresse ein.
+						{% elif "required" in error %}
+							E-Mail-Adresse ist erforderlich.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'fr' %}
+						{% if "valid email" in error %}
+							Veuillez saisir une adresse e-mail valide.
+						{% elif "required" in error %}
+							L’adresse e-mail est obligatoire.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+						{% if "valid email" in error %}
+							Introduce una dirección de correo electrónico válida.
+						{% elif "required" in error %}
+							El correo electrónico es obligatorio.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'it' %}
+						{% if "valid email" in error %}
+							Inserisci un indirizzo email valido.
+						{% elif "required" in error %}
+							L’email è obbligatoria.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+						{% if "valid email" in error %}
+							Insira um endereço de e-mail válido.
+						{% elif "required" in error %}
+							O e-mail é obrigatório.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'vi' %}
+						{% if "valid email" in error %}
+							Vui lòng nhập địa chỉ email hợp lệ.
+						{% elif "required" in error %}
+							Email là bắt buộc.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'th' %}
+						{% if "valid email" in error %}
+							กรุณากรอกอีเมลที่ถูกต้อง
+						{% elif "required" in error %}
+							จำเป็นต้องกรอกอีเมล
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% else %}
+						{{ error }}
+					{% endif %}
+				</div>
+      {% endfor %}
+
+      <small style="color: #555;">
+        {% if lang_code == 'ja' %}パスワードの再設定や領収書に必要です。
+        {% elif lang_code == 'zh-hant' %}密碼重置和收據所需。
+        {% elif lang_code == 'zh-cn' %}密码重置和收据所需。
+        {% elif lang_code == 'ko' %}비밀번호 재설정 및 영수증에 필요합니다.
+        {% elif lang_code == 'de' %}Erforderlich für Passwort-Reset und Belege.
+        {% elif lang_code == 'fr' %}Requis pour la réinitialisation du mot de passe et les reçus.
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Necesario para restablecer la contraseña y recibos.
+        {% elif lang_code == 'it' %}Necessario per il recupero password e le ricevute.
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Necessário para redefinição de senha e recibos.
+        {% elif lang_code == 'vi' %}Cần thiết để đặt lại mật khẩu và biên lai.
+        {% elif lang_code == 'th' %}จำเป็นสำหรับการรีเซ็ตรหัสผ่านและใบเสร็จ
+        {% else %}Required for password reset and receipts.
+        {% endif %}
+      </small>
+    </p>
+
+    <p>
+      <label for="id_password">
+        {% if lang_code == 'ja' %}パスワード:
+        {% elif lang_code == 'zh-hant' %}密碼:
+        {% elif lang_code == 'zh-cn' %}密码:
+        {% elif lang_code == 'ko' %}비밀번호:
+        {% elif lang_code == 'de' %}Passwort:
+        {% elif lang_code == 'fr' %}Mot de passe :
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Contraseña:
+        {% elif lang_code == 'it' %}Password:
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Senha:
+        {% elif lang_code == 'vi' %}Mật khẩu:
+        {% elif lang_code == 'th' %}รหัสผ่าน:
+        {% else %}Password:
+        {% endif %}
+      </label>
+      
+      <input type="password" name="password" id="id_password" required 
+       placeholder="{% if lang_code == 'ja' %}パスワードを入力{% elif lang_code == 'zh-hant' %}輸入密碼{% elif lang_code == 'zh-cn' %}输入密码{% elif lang_code == 'ko' %}비밀번호 입력{% elif lang_code == 'de' %}Passwort eingeben{% elif lang_code == 'fr' %}Entrez votre mot de passe{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Introduce tu contraseña{% elif lang_code == 'it' %}Inserisci la password{% elif lang_code == 'pt' or lang_code == 'pt-br' %}Digite sua senha{% elif lang_code == 'vi' %}Nhập mật khẩu{% elif lang_code == 'th' %}ป้อนรหัสผ่านของคุณ{% else %}Enter your password{% endif %}"
+       style="width: 100%; padding: 8px; border: 1px solid #a6a6a6; border-radius: 3px;">
+      {% for error in form.password.errors %}
+				<div style="color: #d93025; font-size: 0.85em;">
+
+					{% if "required" in error %}
+
+						{% if lang_code == 'ja' %}
+							パスワードは必須です。
+						{% elif lang_code == 'zh-hant' %}
+							密碼為必填。
+						{% elif lang_code == 'zh-cn' %}
+							密码为必填。
+						{% elif lang_code == 'ko' %}
+							비밀번호는 필수입니다.
+						{% elif lang_code == 'de' %}
+							Passwort ist erforderlich.
+						{% elif lang_code == 'fr' %}
+							Le mot de passe est obligatoire.
+						{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+							La contraseña es obligatoria.
+						{% elif lang_code == 'it' %}
+							La password è obbligatoria.
+						{% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+							A senha é obrigatória.
+						{% elif lang_code == 'vi' %}
+							Mật khẩu là bắt buộc.
+						{% elif lang_code == 'th' %}
+							จำเป็นต้องกรอกรหัสผ่าน
+						{% else %}
+							This field is required.
+						{% endif %}
+
+					{% elif "too short" in error %}
+
+						{% if lang_code == 'ja' %}
+							パスワードが短すぎます。
+						{% elif lang_code == 'zh-hant' %}
+							密碼太短。
+						{% elif lang_code == 'zh-cn' %}
+							密码太短。
+						{% elif lang_code == 'ko' %}
+							비밀번호가 너무 짧습니다.
+						{% elif lang_code == 'de' %}
+							Das Passwort ist zu kurz.
+						{% elif lang_code == 'fr' %}
+							Le mot de passe est trop court.
+						{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+							La contraseña es demasiado corta.
+						{% elif lang_code == 'it' %}
+							La password è troppo corta.
+						{% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+							A senha é muito curta.
+						{% elif lang_code == 'vi' %}
+							Mật khẩu quá ngắn.
+						{% elif lang_code == 'th' %}
+							รหัสผ่านสั้นเกินไป
+						{% else %}
+							Password is too short.
+						{% endif %}
+
+					{% elif "too common" in error %}
+
+						{% if lang_code == 'ja' %}
+							パスワードが簡単すぎます。
+						{% elif lang_code == 'zh-hant' %}
+							密碼過於簡單。
+						{% elif lang_code == 'zh-cn' %}
+							密码过于简单。
+						{% elif lang_code == 'ko' %}
+							비밀번호가 너무 쉽습니다.
+						{% elif lang_code == 'de' %}
+							Das Passwort ist zu einfach.
+						{% elif lang_code == 'fr' %}
+							Le mot de passe est trop simple.
+						{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+							La contraseña es demasiado simple.
+						{% elif lang_code == 'it' %}
+							La password è troppo semplice.
+						{% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+							A senha é muito simples.
+						{% elif lang_code == 'vi' %}
+							Mật khẩu quá đơn giản.
+						{% elif lang_code == 'th' %}
+							รหัสผ่านง่ายเกินไป
+						{% else %}
+							Password is too common.
+						{% endif %}
+
+					{% elif "entirely numeric" in error %}
+
+						{% if lang_code == 'ja' %}
+							パスワードは数字のみにはできません。
+						{% elif lang_code == 'zh-hant' %}
+							密碼不能只包含數字。
+						{% elif lang_code == 'zh-cn' %}
+							密码不能只包含数字。
+						{% elif lang_code == 'ko' %}
+							비밀번호는 숫자만 사용할 수 없습니다.
+						{% elif lang_code == 'de' %}
+							Das Passwort darf nicht nur aus Zahlen bestehen.
+						{% elif lang_code == 'fr' %}
+							Le mot de passe ne peut pas être uniquement numérique.
+						{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+							La contraseña no puede ser solo numérica.
+						{% elif lang_code == 'it' %}
+							La password non può essere solo numerica.
+						{% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+							A senha não pode conter apenas números.
+						{% elif lang_code == 'vi' %}
+							Mật khẩu không được chỉ chứa số.
+						{% elif lang_code == 'th' %}
+							รหัสผ่านไม่สามารถเป็นตัวเลขล้วนได้
+						{% else %}
+							Password cannot be entirely numeric.
+						{% endif %}
+
+					{% elif "too similar" in error %}
+
+						{% if lang_code == 'ja' %}
+							ユーザー名と似すぎています。
+						{% elif lang_code == 'zh-hant' %}
+							密碼與使用者名稱太相似。
+						{% elif lang_code == 'zh-cn' %}
+							密码与用户名过于相似。
+						{% elif lang_code == 'ko' %}
+							사용자 이름과 너무 비슷합니다.
+						{% elif lang_code == 'de' %}
+							Das Passwort ist dem Benutzernamen zu ähnlich.
+						{% elif lang_code == 'fr' %}
+							Le mot de passe est trop similaire au nom d’utilisateur.
+						{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+							La contraseña es demasiado similar al nombre de usuario.
+						{% elif lang_code == 'it' %}
+							La password è troppo simile al nome utente.
+						{% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+							A senha é muito parecida com o nome de usuário.
+						{% elif lang_code == 'vi' %}
+							Mật khẩu quá giống tên người dùng.
+						{% elif lang_code == 'th' %}
+							รหัสผ่านคล้ายกับชื่อผู้ใช้มากเกินไป
+						{% else %}
+							Password is too similar to the username.
+						{% endif %}
+
+					{% else %}
+						{{ error }}
+					{% endif %}
+
+				</div>
+      {% endfor %}
+
+    </p>
+
+    <p>
+      <label for="id_country">
+        {% if lang_code == 'ja' %}国:
+        {% elif lang_code == 'zh-hant' %}國家/地區:
+        {% elif lang_code == 'zh-cn' %}国家/地区:
+        {% elif lang_code == 'ko' %}국가:
+        {% elif lang_code == 'de' %}Land:
+        {% elif lang_code == 'fr' %}Pays :
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}País:
+        {% elif lang_code == 'it' %}Paese:
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}País:
+        {% elif lang_code == 'vi' %}Quốc gia:
+        {% elif lang_code == 'th' %}ประเทศ:
+        {% else %}Country:
+        {% endif %}
+      </label>
+      
+      <input type="text" name="country" id="id_country" required 
+       placeholder="{% if lang_code == 'ja' %}例：日本、アメリカ{% elif lang_code == 'zh-hant' %}例如：台灣、日本{% elif lang_code == 'zh-cn' %}例如：中国、日本{% elif lang_code == 'ko' %}예: 한국, 일본{% elif lang_code == 'de' %}z.B. Deutschland, Österreich{% elif lang_code == 'fr' %}ex. France, Canada{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}ej. España, México{% elif lang_code == 'it' %}es. Italia{% elif lang_code == 'pt' or lang_code == 'pt-br' %}ex. Portugal, Brasil{% elif lang_code == 'vi' %}VD: Việt Nam{% elif lang_code == 'th' %}เช่น ไทย, ญี่ปุ่น{% else %}e.g. Japan, USA{% endif %}"
+       value="{{ form.country.value|default:'' }}"
+       style="width: 100%; padding: 8px; border: 1px solid #a6a6a6; border-radius: 3px;">
+      {% for error in form.country.errors %}
+				<div style="color: #d93025;">
+					{% if lang_code == 'ja' %}
+						{% if "required" in error %}
+							国名は必須です。
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'zh-hant' %}
+						{% if "required" in error %}
+							國家為必填項目。
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'zh-cn' %}
+						{% if "required" in error %}
+							国家为必填项。
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'ko' %}
+						{% if "required" in error %}
+							국가는 필수 항목입니다.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'de' %}
+						{% if "required" in error %}
+							Das Land ist erforderlich.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'fr' %}
+						{% if "required" in error %}
+							Le pays est obligatoire.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+						{% if "required" in error %}
+							El país es obligatorio.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'it' %}
+						{% if "required" in error %}
+							Il paese è obbligatorio.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+						{% if "required" in error %}
+							O país é obrigatório.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'vi' %}
+						{% if "required" in error %}
+							Quốc gia là bắt buộc.
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% elif lang_code == 'th' %}
+						{% if "required" in error %}
+							จำเป็นต้องกรอกประเทศ
+						{% else %}
+							{{ error }}
+						{% endif %}
+
+					{% else %}
+						{{ error }}
+					{% endif %}
+				</div>
+      {% endfor %}
+
+    </p>
+
+    <div class="captcha-container" style="margin: 20px 0;">
+      {{ form.captcha }}
+      {% for error in form.captcha.errors %}
+				<div style="color: #d93025;">
+					{% if lang_code == 'ja' %}
+						reCAPTCHA を確認してください。
+
+					{% elif lang_code == 'zh-hant' %}
+						請完成 reCAPTCHA 驗證。
+
+					{% elif lang_code == 'zh-cn' %}
+						请完成 reCAPTCHA 验证。
+
+					{% elif lang_code == 'ko' %}
+						reCAPTCHA 인증을 완료해주세요.
+
+					{% elif lang_code == 'de' %}
+						Bitte bestätigen Sie das reCAPTCHA.
+
+					{% elif lang_code == 'fr' %}
+						Veuillez compléter le reCAPTCHA.
+
+					{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+						Por favor, completa el reCAPTCHA.
+
+					{% elif lang_code == 'it' %}
+						Completa il reCAPTCHA.
+
+					{% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+						Por favor, complete o reCAPTCHA.
+
+					{% elif lang_code == 'vi' %}
+						Vui lòng hoàn tất reCAPTCHA.
+
+					{% elif lang_code == 'th' %}
+						กรุณายืนยัน reCAPTCHA
+
+					{% else %}
+						Please complete the reCAPTCHA.
+					{% endif %}
+				</div>
+      {% endfor %}
+
+    </div>
+    
+    <button type="submit">
+      {% if lang_code == 'ja' %}登録する
+      {% elif lang_code == 'zh-hant' %}註冊
+      {% elif lang_code == 'zh-cn' %}注册
+      {% elif lang_code == 'ko' %}가입하기
+      {% elif lang_code == 'de' %}Registrieren
+      {% elif lang_code == 'fr' %}S'inscrire
+      {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Registrarse
+      {% elif lang_code == 'it' %}Registrati
+      {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Cadastrar
+      {% elif lang_code == 'vi' %}Đăng ký
+      {% elif lang_code == 'th' %}ลงทะเบียน
+      {% else %}Register
+      {% endif %}
+    </button>
+  </form>
+
+  <div class="legal-consent" style="margin-top: 15px; font-size: 0.85em; color: #555; line-height: 1.4;">
+    {% if lang_code == 'ja' %}
+        登録（またはログイン）することにより、Thank Japanの<a href="{% url 'riyoukiyakuja' %}">利用規約</a>および<a href="{% url 'privacy_policyja' %}">プライバシー規約</a>に同意したものとみなされます。
+    {% elif lang_code == 'zh-hant' %}
+        建立帳戶即表示您同意 Thank Japan 的<a href="{% url 'riyoukiyakuzhHANT' %}">使用條件</a>和<a href="{% url 'privacy_policyzhHANT' %}">隱私聲明</a>。
+    {% elif lang_code == 'zh-cn' %}
+        创建账户即表示您同意 Thank Japan 的<a href="{% url 'riyoukiyakuzhCN' %}">使用条件</a>和<a href="{% url 'privacy_policyzhCN' %}">隐私声明</a>。
+    {% elif lang_code == 'ko' %}
+        계정을 생성함으로써 귀하는 Thank Japan의 <a href="{% url 'riyoukiyakuko' %}">이용 약관</a> 및 <a href="{% url 'privacy_policyko' %}">개인정보 처리방침</a>에 동의하게 됩니다.
+    {% elif lang_code == 'de' %}
+        Durch die Erstellung eines Kontos stimmen Sie den <a href="{% url 'riyoukiyakude' %}">Nutzungsbedingungen</a> und der <a href="{% url 'privacy_policyde' %}">Datenschutzerklärung</a> von Thank Japan zu.
+    {% elif lang_code == 'fr' %}
+        En créant un compte, vous acceptez les <a href="{% url 'riyoukiyakufr' %}">Conditions d'utilisation</a> et la <a href="{% url 'privacy_policyfr' %}">Politique de confidentialité</a> de Thank Japan.
+    {% elif lang_code == 'es-es' %}
+        Al crear una cuenta, aceptas las <a href="{% url 'riyoukiyakuesES' %}">Condiciones de Uso</a> y el <a href="{% url 'privacy_policyesES' %}">Aviso de Privacidad</a> de Thank Japan.
+    {% elif lang_code == 'es-mx' %}
+        Al crear una cuenta, aceptas las <a href="{% url 'riyoukiyakuesMX' %}">Condiciones de Uso</a> y el <a href="{% url 'privacy_policyesMX' %}">Aviso de Privacidad</a> de Thank Japan.
+    {% elif lang_code == 'it' %}
+        Creando un account, accetti le <a href="{% url 'riyoukiyakuit' %}">Condizioni d'uso</a> e l' <a href="{% url 'privacy_policyit' %}">Informativa sulla privacy</a> di Thank Japan.
+    {% elif lang_code == 'pt' %}
+        Ao criar uma conta, você concorda com as <a href="{% url 'riyoukiyakupt' %}">Condições de Uso</a> e a <a href="{% url 'privacy_policypt' %}">Notificação de Privacidade</a> do Thank Japan.
+    {% elif lang_code == 'pt-br' %}
+        Ao criar uma conta, você concorda com as <a href="{% url 'riyoukiyakuptBR' %}">Condições de Uso</a> e a <a href="{% url 'privacy_policyptBR' %}">Notificação de Privacidade</a> do Thank Japan.
+    {% elif lang_code == 'vi' %}
+        Bằng cách tạo tài khoản, bạn đồng ý với <a href="{% url 'riyoukiyakuvi' %}">Điều khoản sử dụng</a> và <a href="{% url 'privacy_policyvi' %}">Chính sách bảo mật</a> của Thank Japan.
+    {% elif lang_code == 'th' %}
+        การสร้างบัญชีแสดงว่าคุณยอมรับ<a href="{% url 'riyoukiyakuth' %}">เงื่อนไขการใช้งาน</a>และ<a href="{% url 'privacy_policyth' %}">ประกาศความเป็นส่วนตัว</a>ของ Thank Japan
+    {% elif lang_code == 'en-in' %}
+        By creating an account, you agree to Thank Japan's <a href="{% url 'riyoukiyakuenIN' %}">Conditions of Use</a> and <a href="{% url 'privacy_policyenIN' %}">Privacy Notice</a>.
+    {% else %}
+        By creating an account, you agree to Thank Japan's <a href="{% url 'riyoukiyaku' %}">Conditions of Use</a> and <a href="{% url 'privacy_policy' %}">Privacy Notice</a>.
+    {% endif %}
+  </div>
+
+  <p>
+    {% if lang_code == 'ja' %}すでにアカウントをお持ちですか？ <a href="{% url 'player_login' %}?lang={{ lang_code }}">ログインはこちら</a>
+    {% elif lang_code == 'zh-hant' %}已經有帳號了？ <a href="{% url 'player_login' %}?lang={{ lang_code }}">在此登入</a>
+    {% elif lang_code == 'zh-cn' %}已经有账号了？ <a href="{% url 'player_login' %}?lang={{ lang_code }}">在此登录</a>
+    {% elif lang_code == 'ko' %}이미 계정이 있으신가요? <a href="{% url 'player_login' %}?lang={{ lang_code }}">여기서 로그인</a>
+    {% elif lang_code == 'de' %}Hast du schon ein Konto? <a href="{% url 'player_login' %}?lang={{ lang_code }}">Hier anmelden</a>
+    {% elif lang_code == 'fr' %}Vous avez déjà un compte ? <a href="{% url 'player_login' %}?lang={{ lang_code }}">Connectez-vous ici</a>
+    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}¿Ya tienes una cuenta? <a href="{% url 'player_login' %}?lang={{ lang_code }}">Inicia sesión aquí</a>
+    {% elif lang_code == 'it' %}Hai già un account? <a href="{% url 'player_login' %}?lang={{ lang_code }}">Accedi qui</a>
+    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Já tem uma conta? <a href="{% url 'player_login' %}?lang={{ lang_code }}">Faça login aqui</a>
+    {% elif lang_code == 'vi' %}Bạn đã có tài khoản? <a href="{% url 'player_login' %}?lang={{ lang_code }}">Đăng nhập tại đây</a>
+    {% elif lang_code == 'th' %}มีบัญชีอยู่แล้ว? <a href="{% url 'player_login' %}?lang={{ lang_code }}">เข้าสู่ระบบที่นี่</a>
+    {% else %}Already have an account? <a href="{% url 'player_login' %}?lang={{ lang_code }}">Login here</a>
+    {% endif %}
+  </p>
+
+  <div style="text-align:center; margin:50px 0;">
+    <a class="btn-more" href="javascript:void(0);" onclick="goToTopPage()">
+        {% if lang_code == 'ja' %}← ホームに戻る
+        {% elif lang_code == 'zh-hant' %}← 返回首頁
+        {% elif lang_code == 'zh-cn' %}← 返回首页
+        {% elif lang_code == 'ko' %}← 홈으로 돌아가기
+        {% elif lang_code == 'de' %}← Zurück zur Startseite
+        {% elif lang_code == 'fr' %}← Retour à l'accueil
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}← Volver al inicio
+        {% elif lang_code == 'it' %}← Torna alla home
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}← Voltar para o início
+        {% elif lang_code == 'vi' %}← Quay lại trang chủ
+        {% elif lang_code == 'th' %}← กลับหน้าหลัก
+        {% else %}← Back to Home
+        {% endif %}
+    </a>
+  </div>
+  
+</div>
+
+<script>
+    function goToTopPage() {
+        const topUrl = localStorage.getItem('tj_top_url');
+        if (topUrl) {
+            window.location.href = topUrl;
+        } else {
+            let fallbackUrl = "{% if lang_code == 'ja' %}{% url 'toppageja' %}{% elif lang_code == 'zh-hant' %}{% url 'toppagezhHANT' %}{% elif lang_code == 'zh-cn' %}{% url 'toppagezhCN' %}{% elif lang_code == 'ko' %}{% url 'toppageko' %}{% elif lang_code == 'it' %}{% url 'toppageit' %}{% elif lang_code == 'fr' %}{% url 'toppagefr' %}{% elif lang_code == 'de' %}{% url 'toppagede' %}{% elif lang_code == 'es-mx' %}{% url 'toppageesMX' %}{% elif lang_code == 'es-es' %}{% url 'toppageesES' %}{% elif lang_code == 'pt' %}{% url 'toppagept' %}{% elif lang_code == 'pt-br' %}{% url 'toppageptBR' %}{% elif lang_code == 'vi' %}{% url 'toppagevi' %}{% elif lang_code == 'th' %}{% url 'toppageth' %}{% elif lang_code == 'en-in' %}{% url 'toppageenIN' %}{% else %}{% url 'toppage' %}{% endif %}";
+            window.location.href = fallbackUrl;
+        }
+    }
+</script>
+
+{% endblock %}
+
+  

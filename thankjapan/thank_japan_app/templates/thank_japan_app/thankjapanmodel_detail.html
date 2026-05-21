@@ -1,38 +1,752 @@
-{% extends 'basecategory.html' %}
+{% extends 'base/basecategory.html' %}
+{% load category_filters %}
+{% block title %}{{ object.englishname }} | ThankJapan{% endblock %}
 
-{% block title %}{{ object.englishname }} - Meaning, History & Cultural Significance in Japan{% endblock %}
+{% block meta %}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ object.englishname }} | Learn Japanese">
+    <meta name="twitter:description" content="Learn about {{ object.englishname }} ({{ object.jpname }}) on ThankJapan.">
+    
+    {% if object.image %}
+        <meta name="twitter:image" content="{{ object.image.url }}">
+        <meta property="og:image" content="{{ object.image.url }}">
+    {% else %}
+        <meta name="twitter:image" content="https://res.cloudinary.com/dotekofm5/image/upload/v1768385674/thankjapan/backgrounds/gx8xbypllgs1qogcsvak.jpg">
+        <meta property="og:image" content="https://res.cloudinary.com/dotekofm5/image/upload/v1768385674/thankjapan/backgrounds/gx8xbypllgs1qogcsvak.jpg">
+    {% endif %}
 
-{% block description %}Discover the meaning, history, and cultural background of {{ object.englishname }} ({{ object.jpname }}) in Japanese culture.{% endblock %}
-
-
-{% block content %}
-
-    {% load static %}
-    <div class="main2">
-        {% if object.image and object.image.url %}
-            <img class="detailgazou" src="{{ object.image.url }}" alt="{{ object.englishname }} image" />
-        {% else %}
-            <p>No image available</p>
-        {% endif %}
-            <h1 class="detaildt">{{object.englishname }}</h1> 
-            <hr>
-            <h2>japanese Name:</h2> <p class="detaildt">{{ object.jpname }}</p>
-            <hr>
-            <h2>Romaji name:</h2> <p class="detaildt">{{ object.name }}</p>
-                <hr>
-                <p class="detaildd">description<br />
-                    ↓↓<br />
-                    {{ object.description }}
-                </p>
-                <hr>
-                <p class="detaildd">history<br />
-                    ↓↓<br />
-                    {{ object.history}}
-                </p>
-            
-    </div>
-
- 
-    {% include 'footer.html' %}
+    <meta property="og:title" content="{{ object.englishname }} | ThankJapan" />
+    <meta property="og:description" content="Learn about {{ object.englishname }} ({{ object.jpname }}) on ThankJapan." />
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
+    <meta property="og:type" content="article" />
 {% endblock %}
 
+{% block content %}
+{% load static %}
+
+<style>
+body {
+    background-color: #2f2a26;
+    font-family: 'Noto Serif JP', 'Poppins', sans-serif;
+    color: #f6efe8;
+    margin: 0;
+    padding: 0;
+}
+
+.main2 {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.detailgazou {
+    width: 100%;
+    border-radius: 12px;
+    padding-top: 80px;
+    margin-bottom: 30px;
+    object-fit: cover;
+    max-height: 400px;
+    filter: sepia(0.2);
+}
+
+.detaildt {
+    font-size: 2.2rem;
+    color: #fcd5b5;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.jpname-container {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.label-text {
+    font-size: 0.9rem;
+    color: #8d7b72;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+.jpname-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px; 
+}
+
+.jpname-text {
+    font-size: 3.5rem;
+    color: #fff;
+    font-weight: 700;
+    line-height: 1.8;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+
+.jpname-text ruby {
+    ruby-align: center;
+}
+
+.jpname-text rt {
+    font-size: 1.2rem; 
+    margin-bottom: 0.2em;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    font-weight: 400;
+    color: #eee; /
+}
+
+.voice-btn {
+    background: transparent;
+    border: 2px solid #fcd5b5;
+    color: #fcd5b5;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.voice-btn:hover {
+    background: #fcd5b5;
+    color: #2f2a26;
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(252, 213, 181, 0.4);
+}
+
+.romaji-container {
+    margin-bottom: 40px;
+}
+
+.romaji-text {
+    font-size: 1.8rem;
+    color: #fcd5b5;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+.cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.card {
+    flex: 1 1 300px;
+    background-color: #f6efe8;
+    color: #3b2f2f;
+    border-radius: 16px;
+    padding: 20px 25px;
+    text-align: left;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.card h2 {
+    font-size: 1.2rem;
+    color: #a35c00;
+    margin-bottom: 10px;
+}
+
+.card ul {
+    padding-left: 20px;
+    margin: 0;
+}
+
+.card li {
+    list-style: "✿ ";
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+}
+
+.game-invite-box {
+    margin: 50px auto 30px;
+    padding: 30px 20px;
+    background-color: #f6efe8;
+    border: 4px solid #a35c00;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    max-width: 600px;
+    position: relative;
+    overflow: hidden;
+}
+
+.game-invite-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: repeating-linear-gradient(45deg, rgba(163, 92, 0, 0.05) 0px, rgba(163, 92, 0, 0.05) 2px, transparent 2px, transparent 10px);
+    pointer-events: none;
+}
+
+.game-invite-title {
+    color: #3b2f2f;
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-family: 'Zen Antique', serif;
+}
+
+.game-invite-text {
+    color: #555;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.game-invite-btn {
+    display: inline-block;
+    background: #7b942e;
+    color: #fff;
+    padding: 15px 40px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 0 #556b2f;
+    transition: all 0.2s;
+    position: relative;
+    z-index: 2;
+}
+
+.game-invite-btn:hover {
+    background: #8da835;
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #556b2f;
+    color: #fff;
+}
+
+.related-section {
+    max-width: 1000px;
+    margin: 60px auto 20px;
+    padding-top: 40px;
+    border-top: 1px solid #5c5048;
+}
+
+.related-header {
+    margin-bottom: 20px;
+}
+.related-header h3 {
+    font-size: 1.5rem;
+    color: #fcd5b5;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: 1px;
+}
+
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.related-card {
+    background-color: #f6efe8;
+    color: #3b2f2f;
+    border-radius: 12px;
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.related-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(252, 213, 181, 0.2);
+}
+
+.related-card img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-bottom: 1px solid #d4c4b7;
+}
+
+.related-card-body {
+    padding: 12px;
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.related-card h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #a35c00;
+    font-weight: 700;
+}
+
+.btn-back {
+    display: inline-block;
+    background: #fcd5b5;
+    color: #3b2f2f;
+    padding: 10px 28px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 40px;
+    transition: all 0.3s;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+}
+.btn-back:hover {
+    background: #fbc9a2;
+}
+
+footer {
+    margin-top: 40px;
+    font-size: 0.8rem;
+    color: #c6b6a9;
+}
+
+
+.twitter-share-btn-white {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff; 
+    color: #000000;            
+    font-weight: bold;
+    text-decoration: none;
+    padding: 10px 25px;        
+    border-radius: 30px;
+    font-size: 1.0rem;
+    transition: all 0.3s ease;
+    border: 2px solid #000000; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.twitter-share-btn-white:hover {
+    background-color: #f0f0f0; 
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+}
+
+    
+.x-icon-black {
+    fill: #000000; 
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+}
+
+.rule-caption { 
+    color: #5d4037; 
+    font-size: 0.9em; 
+    margin-top: 15px;
+    line-height: 1.6;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+.rule-caption strong { color: #b7282e; font-weight: bold; }
+.rule-caption span[style] { color: #666 !important; }
+
+    
+
+@media screen and (max-width: 768px) {
+    .detailgazou { height: 280px; }
+    .jpname-text { font-size: 2.5rem; }
+    .romaji-text { font-size: 1.4rem; }
+    .game-invite-btn { width: 80%; }
+    
+    .related-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+
+<div class="main2">
+    {% if object.image and object.image.url %}
+        <img class="detailgazou" src="{{ object.image.url }}" alt="{{ object.englishname }}">
+    {% endif %}
+
+    <h1 class="detaildt">
+        {% if lang_code == 'en-in' %}{{ object.englishname_en_in }}
+        {% elif lang_code == 'zh-hant' %}{{ object.englishname_zh_hant }}
+        {% elif lang_code == 'zh-cn' %}{{ object.englishname_zh_cn }}
+        {% elif lang_code == 'ko' %}{{ object.englishname_ko }}
+        {% elif lang_code == 'fr' %}{{ object.englishname_fr }}
+        {% elif lang_code == 'de' %}{{ object.englishname_de }}
+        {% elif lang_code == 'it' %}{{ object.englishname_it }}
+        {% elif lang_code == 'es-es' %}{{ object.englishname_es_es }}
+        {% elif lang_code == 'es-mx' %}{{ object.englishname_es_mx }}
+        {% elif lang_code == 'pt' %}{{ object.englishname_pt }}
+        {% elif lang_code == 'pt-br' %}{{ object.englishname_pt_br }}
+        {% elif lang_code == 'th' %}{{ object.englishname_th }}
+        {% elif lang_code == 'vi' %}{{ object.englishname_vi }}
+        {% else %}{{ object.englishname }}
+        {% endif %}
+    </h1>
+
+    <div class="jpname-container">
+        <span class="label-text">
+            {% if lang_code == 'ja' %}日本語名
+            {% elif lang_code == 'zh-hant' %}日文名稱
+            {% elif lang_code == 'zh-cn' %}日文名称
+            {% elif lang_code == 'de' %}Japanischer Name
+            {% elif lang_code == 'fr' %}Nom japonais
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Nombre japonés
+            {% elif lang_code == 'it' %}Nome giapponese
+            {% elif lang_code == 'ko' %}일본어 이름
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Nome japonês
+            {% elif lang_code == 'vi' %}Tên tiếng Nhật
+            {% elif lang_code == 'th' %}ชื่อภาษาญี่ปุ่น
+            {% else %}Japanese Name
+            {% endif %}
+
+        </span>
+
+        <div class="jpname-wrapper">
+            <span class="jpname-text">
+                {% if object.kanji_name %}
+                    {{ object.kanji_name|ruby_smart:object.jpname }}
+                {% else %}
+                    {{ object.jpname }}
+                {% endif %}
+            </span>
+
+    
+            <button type="button" class="voice-btn" onclick="speakJapanese('{{ object.jpname }}')" title="Listen">
+                🔊
+            </button>
+        </div>
+
+    </div>
+
+    <div class="romaji-container">
+        <span class="romaji-text">{{ object.name }}</span>
+    </div>
+
+    <div class="cards">
+        <div class="card">
+            <h2>
+                {% if lang_code == 'ja' %}説明
+                {% elif lang_code == 'zh-hant' %}說明
+                {% elif lang_code == 'zh-cn' %}说明
+                {% elif lang_code == 'de' %}Beschreibung
+                {% elif lang_code == 'fr' %}Description
+                {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Descripción
+                {% elif lang_code == 'it' %}Descrizione
+                {% elif lang_code == 'ko' %}설명
+                {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Descrição
+                {% elif lang_code == 'vi' %}Mô tả
+                {% elif lang_code == 'th' %}คำอธิบาย
+                {% else %}Description
+                {% endif %}
+
+            </h2>
+            
+            <ul>
+                {% if lang_code == 'ja' and object.description_ja %}
+                    {% for line in object.description_ja.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'en-in' and object.description_en_in %}
+                    {% for line in object.description_en_in.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'zh-cn' and object.description_zh_cn %}
+                    {% for line in object.description_zh_cn.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'zh-hant' and object.description_zh_hant %}
+                    {% for line in object.description_zh_hant.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'ko' and object.description_ko %}
+                    {% for line in object.description_ko.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'fr' and object.description_fr %}
+                    {% for line in object.description_fr.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'de' and object.description_de %}
+                    {% for line in object.description_de.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'it' and object.description_it %}
+                    {% for line in object.description_it.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'es-es' and object.description_es_es %}
+                    {% for line in object.description_es_es.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'es-mx' and object.description_es_mx %}
+                    {% for line in object.description_es_mx.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'pt' and object.description_pt %}
+                    {% for line in object.description_pt.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'pt-br' and object.description_pt_br %}
+                    {% for line in object.description_pt_br.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'th' and object.description_th %}
+                    {% for line in object.description_th.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'vi' and object.description_vi %}
+                    {% for line in object.description_vi.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% else %}
+                    {% for line in object.description.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% endif %}
+            </ul>
+
+        </div>
+
+        <div class="card">
+            <h2>
+                {% if lang_code == 'ja' %}歴史
+                {% elif lang_code == 'zh-hant' %}歷史
+                {% elif lang_code == 'zh-cn' %}历史
+                {% elif lang_code == 'de' %}Geschichte
+                {% elif lang_code == 'fr' %}Histoire
+                {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Historia
+                {% elif lang_code == 'it' %}Storia
+                {% elif lang_code == 'ko' %}역사
+                {% elif lang_code == 'pt' or lang_code == 'pt-br' %}História
+                {% elif lang_code == 'vi' %}Lịch sử
+                {% elif lang_code == 'th' %}ประวัติศาสตร์
+                {% else %}History
+                {% endif %}
+
+            </h2>
+
+            <ul>
+                {% if lang_code == 'ja' and object.history_ja %}
+                    {% for line in object.history_ja.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'en-in' and object.history_en_in %}
+                    {% for line in object.history_en_in.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'zh-cn' and object.history_zh_cn %}
+                    {% for line in object.history_zh_cn.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'zh-hant' and object.history_zh_hant %}
+                    {% for line in object.history_zh_hant.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'ko' and object.history_ko %}
+                    {% for line in object.history_ko.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'fr' and object.history_fr %}
+                    {% for line in object.history_fr.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'de' and object.history_de %}
+                    {% for line in object.history_de.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'it' and object.history_it %}
+                    {% for line in object.history_it.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'es-es' and object.history_es_es %}
+                    {% for line in object.history_es_es.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'es-mx' and object.history_es_mx %}
+                    {% for line in object.history_es_mx.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'pt' and object.history_pt %}
+                    {% for line in object.history_pt.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'pt-br' and object.history_pt_br %}
+                    {% for line in object.history_pt_br.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'th' and object.history_th %}
+                    {% for line in object.history_th.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% elif lang_code == 'vi' and object.history_vi %}
+                    {% for line in object.history_vi.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% else %}
+                    {% for line in object.history.splitlines %}<li>{{ line }}</li>{% endfor %}
+                {% endif %}
+            </ul>
+            
+        </div>
+    </div>
+
+    <div class="game-invite-box">
+        <h3 class="game-invite-title">
+            {% if lang_code == 'ja' %}この単語を練習する準備はいい？
+            {% elif lang_code == 'zh-hant' %}準備好練習這個單字了嗎？
+            {% elif lang_code == 'zh-cn' %}准备好练习这个单词了吗？
+            {% elif lang_code == 'de' %}Bereit, dieses Wort zu üben?
+            {% elif lang_code == 'fr' %}Prêt à pratiquer ce mot ?
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}¿Listo para practicar esta palabra?
+            {% elif lang_code == 'it' %}Pronto a esercitarti con questa parola?
+            {% elif lang_code == 'ko' %}이 단어를 연습할 준비가 되었나요?
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Pronto para praticar esta palavra?
+            {% elif lang_code == 'vi' %}Sẵn sàng luyện tập từ này chưa?
+            {% elif lang_code == 'th' %}พร้อมฝึกคำนี้แล้วหรือยัง?
+            {% else %}Ready to Practice this Word?
+            {% endif %}
+
+        </h3>
+        
+        <p class="rule-caption">
+            {% if lang_code == 'ja' %}
+                正しい日本語を選んでください！<br>
+                ・3つの選択肢から1つをタップ
+            {% elif lang_code == 'zh-hant' %}
+                請選擇正確的日文！<br>
+                ・從 3 個選項中點擊一個
+            {% elif lang_code == 'zh-cn' %}
+                请选择正確的日文！<br>
+                ・从 3 个选项中点击一个
+            {% elif lang_code == 'de' %}
+                Wähle das richtige Japanisch!<br>
+                - Tippe auf eine der 3 Optionen
+            {% elif lang_code == 'fr' %}
+                Choisissez le bon japonais !<br>
+                - Appuyez sur l'une des 3 options
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+                ¡Elige el japonés correcto!<br>
+                - Toca una de las 3 opciones
+            {% elif lang_code == 'it' %}
+                Scegli il giapponese corretto!<br>
+                - Tocca una delle 3 opzioni
+            {% elif lang_code == 'ko' %}
+                올바른 일본어를 선택하세요!<br>
+                ・3가지 선택지 중 하나를 터치
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+                Escolha o japonês correto!<br>
+                - Toque em uma das 3 opções
+            {% elif lang_code == 'vi' %}
+                Chọn tiếng Nhật đúng!<br>
+                - Chạm vào 1 trong 3 lựa chọn
+            {% elif lang_code == 'th' %}
+                เลือกภาษาญี่ปุ่นที่ถูกต้อง!<br>
+                - แตะหนึ่งใน 3 ตัวเลือก
+            {% else %}
+                Choose the correct Japanese!<br>
+                - Tap one of the 3 choices
+            {% endif %}
+        </p>
+        
+        <a href="{% url 'game_restart' %}?mode=single&model_type=free&slug={{ object.slug }}" class="game-invite-btn">
+            {% if lang_code == 'ja' %}⌨️ この単語を練習する
+            {% elif lang_code == 'zh-hant' %}⌨️ 練習這個單字
+            {% elif lang_code == 'zh-cn' %}⌨️ 练习这个单词
+            {% elif lang_code == 'de' %}⌨️ Dieses Wort üben
+            {% elif lang_code == 'fr' %}⌨️ Pratiquer ce mot
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}⌨️ Practicar esta palabra
+            {% elif lang_code == 'it' %}⌨️ Esercitati con questa parola
+            {% elif lang_code == 'ko' %}⌨️ 이 단어 연습하기
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}⌨️ Praticar esta palavra
+            {% elif lang_code == 'vi' %}⌨️ Luyện tập từ này
+            {% elif lang_code == 'th' %}⌨️ ฝึกคำนี้
+            {% else %}⌨️ Practice This Word
+            {% endif %}
+
+        </a>
+    </div>
+
+    
+    <div style="margin: 30px 0; text-align: center;">
+        <a href="https://twitter.com/intent/tweet?text=Discovering Japanese Culture: {{ object.englishname }} 🇯🇵 Check this out!&url={{ request.build_absolute_uri }}&hashtags=ThankJapan,LearnJapanese,JapanCulture" 
+           target="_blank" 
+           class="twitter-share-btn-white">
+           
+           <svg viewBox="0 0 24 24" aria-hidden="true" class="x-icon-black">
+               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+           </svg>
+           
+            {% if lang_code == 'ja' %}Xでシェア
+            {% elif lang_code == 'zh-hant' %}在 X 分享
+            {% elif lang_code == 'zh-cn' %}在 X 分享
+            {% elif lang_code == 'de' %}Auf X teilen
+            {% elif lang_code == 'fr' %}Partager sur X
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Compartir en X
+            {% elif lang_code == 'it' %}Condividi su X
+            {% elif lang_code == 'ko' %}X에 공유
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Compartilhar no X
+            {% elif lang_code == 'vi' %}Chia sẻ trên X
+            {% elif lang_code == 'th' %}แชร์บน X
+            {% else %}Share on X
+            {% endif %}
+
+        </a>
+    </div>
+
+    
+    {% if related_items %}
+    <div class="related-section">
+        <div class="related-header">
+            <h3>
+                {% if lang_code == 'ja' %}もっと探す
+                {% elif lang_code == 'zh-hant' %}探索更多
+                {% elif lang_code == 'zh-cn' %}探索更多
+                {% elif lang_code == 'de' %}Mehr entdecken
+                {% elif lang_code == 'fr' %}Explorer davantage
+                {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Explorar más
+                {% elif lang_code == 'it' %}Esplora di più
+                {% elif lang_code == 'ko' %}더 둘러보기
+                {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Explorar mais
+                {% elif lang_code == 'vi' %}Khám phá thêm
+                {% elif lang_code == 'th' %}สำรวจเพิ่มเติม
+                {% else %}Explore More
+                {% endif %}
+
+            </h3>
+        </div>
+        <div class="related-grid">
+            {% for item in related_items %}
+            <a href="{% url 'category_detail' item.category item.slug %}" class="related-card">
+                {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.englishname }}" loading="lazy">
+                {% else %}
+                    <div style="height:120px; background:#e0d6ce; display:flex; align-items:center; justify-content:center; color:#888;">
+                        No Image
+                    </div>
+                {% endif %}
+                <div class="related-card-body">
+                    <h4>{{ item.englishname }}</h4>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <button onclick="smartBack('{{ category_list_url }}')" class="btn-back" id="back-btn">
+        ← Back
+    </button>
+    
+    <footer>
+        © 2025 Thank Japan All Rights Reserved.
+    </footer>
+</div>
+
+<script>
+function speakJapanese(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ja-JP';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        window.speechSynthesis.speak(utterance);
+    } else {
+        alert("Sorry, your browser does not support text-to-speech.");
+    }
+}
+
+function smartBack(categoryListUrl) {
+    const params = new URLSearchParams(window.location.search);
+    const referrer = document.referrer;
+
+    if (params.get('from') === 'game') {
+        window.close();
+        setTimeout(() => {
+            window.location.href = "/game/result/";
+        }, 100);
+        return;
+    }
+
+    if (params.get('mode') === 'single' || params.get('origin') === 'category') {
+        window.location.href = categoryListUrl;
+        return;
+    }
+
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.location.href = categoryListUrl;
+    }
+
+    setTimeout(() => {
+        if (window.location.href.includes(window.location.pathname)) {
+            window.location.href = categoryListUrl;
+        }
+    }, 300);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('from') === 'game') {
+        const btn = document.getElementById('back-btn');
+        if (btn) btn.textContent = '× Close';
+    }
+});
+</script>
+{% endblock %}

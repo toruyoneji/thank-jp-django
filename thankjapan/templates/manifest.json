@@ -1,0 +1,23 @@
+{
+  "name": "ThankJapan: Japanese Vocab & Kanji",
+  "short_name": "ThankJapan",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a1a1a",
+  "description": "Master Japanese vocabulary and Kanji through culture and interactive games in 15 languages.",
+  "icons": [
+    {
+      "src": "https://res.cloudinary.com/dotekofm5/image/upload/v1779071765/thankjapan/backgrounds/es8wp3d0qg99odz0ux4n.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://res.cloudinary.com/dotekofm5/image/upload/v1779071765/thankjapan/backgrounds/es8wp3d0qg99odz0ux4n.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,625 @@
+{% extends 'base/basecategory.html' %}
+{% load category_filters %}
+
+{% block title %}Japanese Slang & SNS Terms | Learn Modern Lingo | ThankJapan{% endblock %}
+{% block og_title %}Japanese Slang & SNS - Master Internet Culture | ThankJapan{% endblock %}
+{% block og_description %}Master the latest Japanese slang and internet terms used in anime and SNS. Learn cool vocabulary from 'Kusa' to 'Oshi' and sound like a native with ThankJapan.{% endblock %}
+{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}
+{% block description %}Master the latest Japanese slang and internet terms used in anime and SNS. Learn cool vocabulary from 'Kusa' to 'Oshi' and sound like a native with ThankJapan.{% endblock %}
+
+{% block content %}
+{% load static %}
+
+<script>
+    window.shareText = "Master modern Japanese Slang & SNS terms with ThankJapan! Learn cool lingo like a native.";
+</script>
+
+<style>
+body {
+    background-color: #fffaf5;
+    font-family: 'Noto Sans JP', 'Poppins', sans-serif;
+    color: #333;
+}
+
+.category-header {
+    text-align: center;
+    padding: 60px 20px 40px;
+    background: linear-gradient(135deg, #ffe8d6 0%, #fffaf5 100%);
+    border-radius: 0 0 40px 40px;
+    margin-top: 10px;
+}
+.category-header h1 {
+    font-size: 2.2rem;
+    font-family: 'Sawarabi Mincho', serif;
+    color: #d46a00;
+}
+
+.main2 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    padding: 50px 6%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+
+.flashcard {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid #ffe0b2;
+    position: relative;
+    transition: transform 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.flashcard:active { transform: scale(0.98); }
+
+.card-image img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+}
+
+
+.card-info {
+    padding: 10px 5px !important;
+    text-align: center;
+}
+
+.card-english {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #d46a00;
+    margin-bottom: 0 !important;
+}
+
+.jlpt-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #d4af37;
+    color: #000;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    z-index: 10;
+}
+
+
+.locked-card-container {
+    grid-column: 1 / -1; 
+    display: flex;
+    justify-content: center;
+    margin: 20px 0 !important;
+    padding: 0 20px;
+}
+
+.locked-card {
+    background: linear-gradient(135deg, #1a1a1a, #2c3e50) !important;
+    color: #fff;
+    padding: 30px !important;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    max-width: 600px;
+    width: 100%;
+    border: 2px solid #d4af37;
+}
+
+.unlock-btn {
+    display: inline-block;
+    background: linear-gradient(45deg, #d4af37, #f3e5ab, #d4af37);
+    color: #000;
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 12px 40px;
+    border-radius: 50px;
+    text-decoration: none;
+}
+
+.btn-more {
+    display: inline-block;
+    background: #ffb347;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 20px;
+    transition: background 0.3s;
+}
+
+.btn-more:hover { background: #ff9642; }
+
+.pagination-container {
+  overflow-x: auto;
+  padding: 15px 0;
+  -webkit-overflow-scrolling: touch;
+}
+.pagination {
+  display: flex;
+  gap: 10px;
+  min-width: max-content;
+  justify-content: center;
+}
+.page-btn {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  background-color: #f8f8f8;
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.page-btn:hover, .page-btn.current {
+  background-color: #e63946;
+  color: #fff;
+  border-color: #e63946;
+}
+
+
+
+#detailModal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    overflow-y: auto;
+}
+
+#detailModal.active { display: block; }
+
+.modal-body-content {
+    background-color: #2f2a26;
+    width: 94%;
+    max-width: 850px;
+    margin: 40px auto;
+    border-radius: 20px;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    overflow: hidden;
+    color: #f6efe8;
+}
+
+.modal-nav {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 10015;
+}
+
+.modal-close-btn {
+    background: #7b942e !important;
+    border: 3px solid #ffffff !important;
+    color: white !important;
+    font-size: 26px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.modal-detail-wrapper {
+    display: block !important;
+    padding: 30px 20px 60px !important;
+    text-align: center !important;
+}
+
+.modal-detail-wrapper .detailgazou {
+    width: 100% !important;
+    height: auto !important;
+    border-radius: 12px;
+    margin-bottom: 25px !important;
+    display: block !important;
+}
+
+.modal-detail-wrapper .jpname-text {
+    font-size: 3.5rem !important;
+    color: #fff !important;
+}
+
+
+.modal-detail-wrapper .voice-btn {
+    background: transparent !important;
+    border: 2px solid #fcd5b5 !important;
+    color: #fcd5b5 !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    font-size: 1.2rem !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin-left: 10px !important;
+    vertical-align: middle !important;
+}
+
+.modal-detail-wrapper .cards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+    margin-top: 30px !important;
+    align-items: stretch !important; /
+}
+
+
+.modal-detail-wrapper .card {
+    background-color: #f6efe8 !important;
+    color: #3b2f2f !important;
+    border-radius: 16px !important;
+    padding: 15px 20px !important; 
+    text-align: left !important;
+    margin: 0 !important;
+}
+
+.modal-detail-wrapper .card h2 { color: #a35c00 !important; font-size: 1.1rem !important; }
+.modal-detail-wrapper .card li { list-style: "✿ " !important; margin-bottom: 4px !important; }
+
+
+
+.modal-detail-wrapper .game-invite-box {
+    margin: 40px auto 20px !important;
+    padding: 30px 20px !important;
+    background: linear-gradient(135deg, #2f2a26, #1e1b19) !important;
+    border: 2px solid #d4af37 !important;
+    border-radius: 16px !important;
+    text-align: center !important;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
+}
+
+
+.modal-detail-wrapper .game-invite-title {
+    color: #fcd5b5 !important;
+    font-size: 1.4rem !important;
+}
+
+
+.modal-detail-wrapper .rule-caption {
+    color: #c6b6a9 !important;
+}
+
+
+.modal-detail-wrapper .game-invite-btn {
+    display: inline-block !important;
+    background: linear-gradient(135deg, #d4af37, #ffd700) !important;
+    color: #000 !important;
+    padding: 15px 45px !important;
+    border-radius: 50px !important;
+    text-decoration: none !important;
+    font-weight: bold !important;
+    font-size: 1.2rem !important;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3) !important;
+    border: none !important;
+}
+
+.modal-detail-wrapper .game-invite-btn:hover {
+    background: linear-gradient(135deg, #ffd700, #f3e5ab) !important;
+    transform: translateY(-2px) !important;
+}
+
+
+.modal-detail-wrapper .twitter-share-btn-white {
+    display: inline-flex !important;
+    align-items: center !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    padding: 8px 20px !important;
+    border-radius: 30px !important;
+    border: 2px solid #000 !important;
+}
+
+
+.modal-detail-wrapper .related-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+}
+
+.modal-detail-wrapper .related-card { background-color: #f6efe8 !important; border-radius: 12px !important; text-decoration: none !important; color: inherit !important;}
+.modal-detail-wrapper .related-card img { width: 100% !important; height: 100px !important; object-fit: cover !important; }
+
+.modal-detail-wrapper .related-card h4 {
+    color: #a35c00 !important; 
+    text-decoration: none !important;
+    margin: 0 !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+}
+
+.modal-detail-wrapper .related-card:hover h4 {
+    color: #d46a00 !important; 
+    text-decoration: none !important;
+}
+
+.modal-detail-wrapper footer, .modal-detail-wrapper .btn-back { display: none !important; }
+body.modal-open { overflow: hidden !important; }
+
+
+.tap-guide {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.finger-icon {
+    font-size: 3.5rem;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3));
+    animation: tap-animation 0.8s infinite;
+}
+
+.tap-text {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-top: -5px;
+    white-space: nowrap;
+}
+
+
+@keyframes tap-animation {
+    0% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.2) translateY(-10px); }
+    100% { transform: scale(1) translateY(0); }
+}
+
+
+.flashcard {
+    position: relative; 
+}
+
+@media (max-width: 900px) { .main2 { grid-template-columns: repeat(2, 1fr); gap: 16px; } }
+@media (max-width: 600px) { .flashcard { height: auto; } .card-image img { height: 140px; } }
+</style>
+
+
+<div class="category-header">
+    <h1>
+        {% if lang_code == 'ja' %}
+            スラングとSNS 🔥
+        {% elif lang_code == 'zh-hant' %}
+            網路俚語與SNS 🔥
+        {% elif lang_code == 'zh-cn' %}
+            网络俚语与SNS 🔥
+        {% elif lang_code == 'de' %}
+            Slang & Soziale Medien 🔥
+        {% elif lang_code == 'fr' %}
+            Argot & Réseaux sociaux 🔥
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+            Jerga y Redes Sociales 🔥
+        {% elif lang_code == 'it' %}
+            Slang e Social Media 🔥
+        {% elif lang_code == 'ko' %}
+            슬랭 & SNS 🔥
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+            Gíria e Redes Sociais 🔥
+        {% elif lang_code == 'vi' %}
+            Tiếng lóng & Mạng xã hội 🔥
+        {% elif lang_code == 'th' %}
+            สแลงและโซเชียลมีเดีย 🔥
+        {% else %}
+            Slang & SNS 🔥
+        {% endif %}
+    </h1>
+
+    <p>
+        {% if lang_code == 'ja' %}
+            SNSやネットで使われる現代の日本語をマスターしよう。教科書には載っていない、アニメや日常会話で使われるリアルな表現を学べる。
+        {% elif lang_code == 'zh-hant' %}
+            掌握SNS和網路上的現代日語。學習教科書中沒有、在動漫和日常對話中使用的真實表達。
+        {% elif lang_code == 'zh-cn' %}
+            掌握SNS和网络上的现代日语。学习教科书中没有、在动漫和日常对话中使用的真实表达。
+        {% elif lang_code == 'de' %}
+            Meistere modernes Japanisch aus dem Internet und sozialen Medien. Lerne coole Ausdrücke aus Animes und dem Alltag, die in keinem Lehrbuch stehen.
+        {% elif lang_code == 'fr' %}
+            Maîtrisez le japonais moderne utilisé sur Internet et les réseaux sociaux. Apprenez des expressions cool d'anime et de la vie quotidienne qu'on ne trouve pas dans les manuels.
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+            Domina el japonés moderno de internet y las redes sociales. Aprende expresiones geniales de anime y la vida diaria que no aparecen en los libros de texto.
+        {% elif lang_code == 'it' %}
+            Padroneggia il giapponese moderno usato su Internet e sui social media. Impara espressioni cool dagli anime e dalla vita quotidiana che non si trovano nei libri di testo.
+        {% elif lang_code == 'ko' %}
+            SNS와 인터넷에서 사용되는 현대 일본어를 마스터하세요. 교과서에는 없는, 애니메이션이나 일상 대화에서 쓰이는 생생한 표현을 배울 수 있습니다.
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+            Domine o japonês moderno usado na internet e nas redes sociais. Aprenda expressões legais de anime e do dia a dia que não estão nos livros didáticos.
+        {% elif lang_code == 'vi' %}
+            Làm chủ tiếng Nhật hiện đại dùng trên Internet và mạng xã hội. Học các biểu đạt cực chất từ anime và đời sống thường ngày mà sách giáo khoa không hề có.
+        {% elif lang_code == 'th' %}
+            ฝึกภาษาญี่ปุ่นสมัยใหม่ที่ใช้ในโซチェルมีเดียและอินเทอร์เน็ต เรียนรู้สำนวนสุดคูลจากอนิเมะและชีวิตประจำวันซึ่งไม่มีในตำราเรียน
+        {% else %}
+            Master modern Japanese used on the internet and SNS. Learn cool phrases from anime and daily life that you won't find in textbooks.
+        {% endif %}
+    </p>
+    
+</div>
+
+<div class="main2">
+    {% for item in object_list %}
+        {% url 'detail_premium' category=item.category slug=item.slug as detail_url %}
+        <div class="flashcard" onclick="hideGuide(this); openDetailModal('{{ detail_url }}?lang={% if lang_code %}{{ lang_code }}{% else %}en{% endif %}')">  
+            {% if forloop.first %}
+            <div class="tap-guide" id="first-card-guide">
+                <div class="finger-icon">👆</div>
+                <div class="tap-text">
+                    {% if lang_code == 'ja' %}タップ！
+                    {% elif lang_code == 'zh-hant' %}點擊！
+                    {% elif lang_code == 'zh-cn' %}点击！
+                    {% elif lang_code == 'ko' %}탭!
+                    {% elif lang_code == 'fr' %}Appuyez !
+                    {% elif lang_code == 'de' %}Tippen!
+                    {% elif lang_code == 'it' %}Tocca!
+                    {% elif lang_code == 'es' or lang_code == 'es-es' %}¡Toca!
+                    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Toque!
+                    {% elif lang_code == 'vi' %}Chạm!
+                    {% elif lang_code == 'th' %}แตะ!
+                    {% else %}Tap!
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if item.jlpt_level %}
+                <div class="jlpt-badge">{{ item.jlpt_level }}</div>
+            {% endif %}
+
+            <div class="card-image">
+                {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.englishname }}" {% if forloop.counter > 7 %} loading="lazy" {% endif %}>
+                {% else %}
+                    <div class="no-image">No Image</div>
+                {% endif %}
+            </div>
+
+            <div class="card-info">
+                <div class="card-english">
+                    {% if lang_code == 'ja' %}{{ item.englishname }}
+                    {% elif lang_code == 'zh-hant' %}{{ item.englishname_zh_hant }}
+                    {% elif lang_code == 'zh-cn' %}{{ item.englishname_zh_cn }}
+                    {% elif lang_code == 'ko' %}{{ item.englishname_ko }}
+                    {% elif lang_code == 'fr' %}{{ item.englishname_fr }}
+                    {% elif lang_code == 'de' %}{{ item.englishname_de }}
+                    {% elif lang_code == 'it' %}{{ item.englishname_it }}
+                    {% elif lang_code == 'es' or lang_code == 'es-es' %}{{ item.englishname_es_es }}
+                    {% elif lang_code == 'es-mx' %}{{ item.englishname_es_mx }}
+                    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}{{ item.englishname_pt }}
+                    {% elif lang_code == 'th' %}{{ item.englishname_th }}
+                    {% elif lang_code == 'vi' %}{{ item.englishname_vi }}
+                    {% else %}{{ item.englishname }}{% endif %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+</div>
+
+<div class="pagination-container">
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page=1&lang={{ lang_code }}" class="page-btn">&laquo;</a>
+      <a href="?page={{ page_obj.previous_page_number }}&lang={{ lang_code }}" class="page-btn">Prev</a>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+        <span class="page-btn current">{{ num }}</span>
+      {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+        <a href="?page={{ num }}&lang={{ lang_code }}" class="page-btn">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&lang={{ lang_code }}" class="page-btn">Next</a>
+      <a href="?page={{ page_obj.paginator.num_pages }}&lang={{ lang_code }}" class="page-btn">&raquo;</a>
+    {% endif %}
+  </div>
+</div>
+
+<div id="detailModal">
+    <div class="modal-body-content">
+        <div class="modal-nav">
+            <button onclick="closeDetailModal()" class="modal-close-btn">✕</button>
+        </div>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+
+<div style="text-align:center; margin:50px 0;">
+   <a class="btn-more" href="javascript:void(0);" onclick="goToCategoryList()">← Back</a>
+</div>
+
+<script>
+function hideGuide(card) {
+    const guide = card.querySelector('.tap-guide');
+    if (guide) {
+        guide.style.display = 'none';
+    }
+}
+
+function speakJapanese(text) {
+    if (!window.speechSynthesis) {
+        alert("Audio not supported.");
+        return;
+    }
+    const uttr = new SpeechSynthesisUtterance(text);
+    uttr.lang = 'ja-JP';
+    uttr.rate = 0.9;
+    speechSynthesis.speak(uttr);
+}
+
+function openDetailModal(url) {
+    const modal = document.getElementById('detailModal');
+    const modalBody = document.getElementById('modalBody');
+    
+    modal.classList.add('active');
+    document.body.classList.add('modal-open');
+    modalBody.innerHTML = '<div style="text-align:center;padding:100px;color:white;">Loading...</div>';
+
+    fetch(url)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const detailContent = doc.querySelector('.main2');
+            
+            if (detailContent) {
+                detailContent.classList.remove('main2');
+                detailContent.classList.add('modal-detail-wrapper');
+                
+                modalBody.innerHTML = '';
+                modalBody.appendChild(detailContent);
+                modal.scrollTop = 0;
+                history.pushState({modal: true}, "");
+            }
+        });
+}
+
+function closeDetailModal() {
+    const modal = document.getElementById('detailModal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.classList.remove('modal-open');
+        document.getElementById('modalBody').innerHTML = '';
+    }
+}
+
+window.onpopstate = function() {
+    closeDetailModal();
+};
+
+window.onclick = function(event) {
+    const modal = document.getElementById('detailModal');
+    if (event.target == modal) {
+        closeDetailModal();
+    }
+}
+</script>
+
+
+{% endblock %}

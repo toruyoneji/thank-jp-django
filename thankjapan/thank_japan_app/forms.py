@@ -2,6 +2,9 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from .models import Player
+from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.widgets import ReCaptchaV2Checkbox
+from django.utils.translation import gettext_lazy as _
 import re
 
 User = get_user_model()
@@ -55,13 +58,38 @@ class UsernameForm(forms.Form):
         label="Username",
         max_length=50,
         validators=[uservalidform],
-        widget=forms.TextInput(attrs={'placeholder': 'Enter your username'})
+        widget=forms.TextInput(attrs={'placeholder': 'Enter your username'}),
+        help_text='Please connect your names with underscores (e.g., john_doe).',
     )
+    
+    email = forms.EmailField(
+        label="Email Address",
+        widget=forms.EmailInput(attrs={'placeholder': 'Enter your email'}),
+        required=True,
+        help_text="Required for password reset.",
+    )
+    
+    password = forms.CharField(
+        label="Password",
+        max_length=128,
+        widget=forms.PasswordInput(attrs={'placeholder': 'Enter your password'}),
+        required=True,
+        help_text="Password must be at least 8 characters long.",
+    )
+    
     country = forms.CharField(
         label="Country",
         max_length=50,
-        required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'Your Country (optional)'})
+        required=True,
+        widget=forms.TextInput(attrs={'placeholder': 'e.g. Japan, USA'})
+    )
+    
+    captcha = ReCaptchaField(
+        label="",
+        widget=ReCaptchaV2Checkbox(),
+        error_messages={
+            'required': _("Please complete the reCAPTCHA.")
+        }
     )
 
 

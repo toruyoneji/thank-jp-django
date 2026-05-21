@@ -1,54 +1,1248 @@
-{% extends 'base.html' %}
+{% extends 'base/basecategory.html' %}
+{% load category_filters %}
 {% block title %}Question {{ current_index }} | ThankJapan{% endblock %}
 
 {% block content %}
+<script src="https://unpkg.com/wanakana"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<script>
+    
+    document.addEventListener('htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    });
+</script>
+
 
 <style>
-.neon-button {
-  background: #111;
-  color: #ff3c78;
-  padding: 15px 35px;
-  font-size: 1.3rem;
-  font-weight: 700;
-  border: 2px solid #ff3c78;
-  border-radius: 25px;
-  box-shadow: 0 0 8px #ff3c78, 0 0 15px #ff3c78 inset;
-  cursor: pointer;
-  transition: box-shadow 0.3s ease;
+html, body { background-color: #111 !important; }
+
+body {
+  background-color: #111;
+  background-image: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.05) 2px,
+      rgba(0,0,0,0.05) 4px
+  );
+  color: #fff;
+  font-family: 'Zen Antique', 'Shippori Mincho', 'Noto Serif JP', serif;
+  text-align: center;
+  overflow-x: hidden;
+  margin: 0; padding: 0;
 }
 
-.neon-button:hover {
-  box-shadow: 0 0 20px #ff3c78, 0 0 30px #ff3c78 inset;
+.main2 {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 40px;
+  background: #111;
+  border-radius: 8px;
+  border: 4px solid #8c7042; 
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.5s ease-in-out;
+  box-sizing: border-box; 
+  width: 95%;
+  position: relative;
 }
+
+h1 {
+  font-size: 2.5rem;
+  color: #fff;
+  text-shadow: none;
+  border-bottom: 2px solid #bf3926; 
+  display: inline-block;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+h2 { 
+    color: #e0d5c0;
+    font-weight: 600; 
+    margin: 20px 0; 
+    font-size: 1.4rem; 
+}
+
+
+
+img {
+  max-width: 400px; width: 100%;
+  height: auto;
+  border-radius: 4px; 
+  margin: 20px 0;
+  border: 4px solid #333;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+  transition: transform 0.3s;
+}
+img:hover { transform: scale(1.02); }
+
+.neon-button {
+  background: #4a6b46;
+  color: #fff; 
+  padding: 15px 40px; 
+  font-size: 1.3rem; 
+  font-weight: 700;
+  border: 1px solid #6b8c66; 
+  border-radius: 4px; 
+  box-shadow: 0 4px 0 #2a3d28;
+  cursor: pointer; 
+  transition: all 0.2s ease; 
+  margin-top: 15px;
+  max-width: 100%;
+  box-sizing: border-box;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+.neon-button:hover { 
+    transform: translateY(2px); 
+    box-shadow: 0 2px 0 #2a3d28;
+    background: #5d8258;
+}
+
+.hint-section {
+  margin: 25px 0; padding: 20px 10px;
+  background: #222;
+  border-radius: 4px;
+  border: 1px solid #444;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  width: 100%; box-sizing: border-box;
+}
+
+.hint-label {
+  font-size: 1.5rem; 
+  color: #fff; 
+  font-weight: bold; 
+  margin: 0;
+  border-bottom: 1px dashed #666;
+  padding-bottom: 5px;
+  width: 100%;
+}
+
+.visual-hint-container {
+  display: flex; justify-content: center; align-items: flex-end;
+  gap: 6px; padding: 15px 10px;
+  background: #000;
+  border-radius: 4px; 
+  border: 2px solid #8c7042;
+  min-height: 90px;
+  outline: none; cursor: text; transition: all 0.2s ease;
+  flex-wrap: wrap;
+  width: 100%; box-sizing: border-box;
+}
+.visual-hint-container:focus-within {
+    border-color: #bf3926;
+}
+
+.hint-char-display {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  font-family: 'Zen Antique', serif; 
+  width: auto; min-width: 45px; height: auto; min-height: 80px;
+  margin: 0 4px; 
+  border-bottom: 3px solid #fff;
+  box-sizing: border-box; padding-bottom: 4px;
+}
+.char-main { 
+    font-size: 2.2rem; 
+    font-weight: bold; 
+    color: #fff;
+    line-height: 1.0; 
+    margin-bottom: 2px; 
+}
+.char-sub { 
+    font-size: 1.1rem; 
+    font-weight: bold; 
+    color: #bf3926;
+    font-family: monospace; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+}
+
+.hint-char-display.filled .char-main {
+    color: #f0e68c;
+}
+.hint-char-display.filled {
+    border-bottom-color: #bf3926; 
+}
+
+.onscreen-keyboard {
+    display: none;
+    flex-direction: column; align-items: center; gap: 6px;
+    margin-top: 20px; user-select: none;
+    width: 100%;
+}
+.keyboard-row {
+    display: flex; gap: 4px; justify-content: center;
+    width: 100%; flex-wrap: nowrap;
+}
+.key-btn {
+    background: #333;
+    color: #e0d5c0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 12px 0;
+    flex: 1; max-width: 45px;
+    font-size: 1.1rem; font-weight: bold;
+    cursor: pointer; transition: all 0.1s;
+    box-shadow: 0 2px 0 #111;
+    display: flex; justify-content: center; align-items: center;
+    font-family: sans-serif;
+}
+.key-btn:active { 
+    transform: translateY(2px); 
+    box-shadow: none; 
+    background: #444;
+}
+.key-btn.special { 
+    max-width: 60px; font-size: 0.9rem; 
+    background: #444; border-color: #666; flex: 1.5; 
+}
+.key-hyphen { 
+    background: #333; border-color: #555; 
+}
+
+.english-meaning-display {
+    margin: 10px auto 20px; padding: 8px 15px;
+    background: rgba(0,0,0,0.6); 
+    border: 1px solid #555; 
+    border-left: 5px solid #bf3926;
+    border-radius: 0 4px 4px 0; 
+    display: inline-block;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
+    animation: fadeIn 1s ease-in;
+    max-width: 90%; box-sizing: border-box;
+}
+.meaning-label { color: #aaa; font-size: 1.0rem; margin-right: 8px; text-transform: uppercase; letter-spacing: 1px; }
+.meaning-text { color: #fff; font-weight: bold; font-size: 2.0rem; font-family: sans-serif; }
+
+.cursor-bar {
+    display: inline-block; width: 2px; height: 40px; 
+    background-color: #bf3926; 
+    animation: blink 1s infinite; margin-left: 2px; margin-bottom: 10px;
+    box-shadow: none;
+}
+@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes fadeIn { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+
+.footer-note { font-size: 0.9rem; color: #666; margin-top: 40px; opacity: 0.9; }
+.footer-note a { color: #8c7042; text-decoration: none; border-bottom: 1px dotted #8c7042; }
+.footer-note a:hover { text-decoration: none; border-bottom: 1px solid #8c7042; }
+
+.sound-toggle-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.sound-toggle-btn {
+    background: transparent;
+    border: 1px solid #8c7042;
+    color: #fff;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: 'Zen Antique', serif;
+    transition: all 0.3s;
+    opacity: 0.8;
+}
+
+.sound-toggle-btn:hover {
+    background: rgba(140, 112, 66, 0.3);
+    opacity: 1;
+}
+
+.sound-toggle-btn.muted {
+    color: #aaa;
+    border-color: #555;
+    text-decoration: line-through;
+}
+
+.voice-btn {
+    background: #fff;
+    border: 2px solid #7b942e;
+    color: #7b942e;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.voice-btn:hover {
+    background: #7b942e;
+    color: #fff;
+    transform: scale(1.1);
+}
+
+.next-btn {
+    display: inline-block;
+    padding: 15px 30px;
+    margin: 10px 5px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    min-width: 220px;
+    cursor: pointer;
+}
+.btn-back-premium {
+    background: linear-gradient(135deg, #d4af37 0%, #f1c40f 100%) !important;
+    color: #1e1b19 !important;
+    box-shadow: 0 4px 0 #8b7326;
+}
+.btn-back-free {
+    background: #7b942e !important;
+    color: #fff !important;
+    box-shadow: 0 4px 0 #556b2f;
+}
+.btn-game-next {
+    background: #556b2f !important;
+    color: #fff !important;
+    box-shadow: 0 4px 0 #3e4a2a;
+}
+
+
+.choice-btn {
+    width: 100%;
+    max-width: 400px;
+    padding: 18px 20px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid #00bcd4;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1.4;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+
+.choice-btn ruby {
+    ruby-align: center;
+}
+
+.choice-btn rt {
+    font-size: 0.65rem;
+    color: #b0bec5;
+    font-weight: normal;
+    letter-spacing: 0.05em;
+}
+
+
+@media (hover: hover) {
+    .choice-btn:hover {
+        background: rgba(0, 188, 212, 0.2);
+        border-color: #00e5ff;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 188, 212, 0.4);
+    }
+}
+
+.choice-btn:active {
+    transform: scale(0.96);
+    background: #00bcd4;
+}
+
+
+#timer-bar-bg {
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+#timer-bar-fill {
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.8);
+}
+
+
+.result-section {
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+
+.result-actions p {
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: 1px;
+}
+
+
+.kanji-question-box {
+    width: 100%;
+    max-width: 400px;
+    height: 250px; 
+    background-color: rgba(255, 255, 255, 0.05); 
+    border: 2px solid #d4af37; 
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+
+.kanji-text {
+    font-size: 6rem; 
+    color: #fff;
+    margin: 0;
+    font-family: 'Zen Antique', 'Shippori Mincho', serif;
+    letter-spacing: 10px;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+
+.question-image {
+    width: 100%;
+    max-width: 400px;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 15px;
+}
+
+
+
+@media (max-width: 1024px) {
+  .main2 {
+      padding: 20px 10px;
+      margin: 90px auto 20px auto !important;
+      width: 95%;
+  }
+  h1 { font-size: 1.8rem; border-bottom-width: 2px; }
+  .key-btn { 
+      font-size: 0.9rem; 
+      padding: 10px 0;
+      max-width: none;
+  }
+  .visual-hint-container { min-height: 70px; }
+  .onscreen-keyboard { display: flex; }
+}
+
+@media (max-width: 768px) {
+   
+    .main2 {
+        margin: 5px auto !important; 
+        padding: 10px !important;
+        width: 98% !important;
+    }
+
+    
+    h1 { font-size: 1.1rem !important; margin: 0 !important; padding: 0 !important; border: none !important; }
+    h2 { font-size: 0.9rem !important; margin: 5px 0 !important; }
+
+    
+    .question-visual-area {
+        min-height: auto !important;
+        margin-bottom: 5px !important;
+    }
+    .question-image, .kanji-question-box {
+        height: 25vh !important; 
+        width: auto !important;
+        margin: 5px auto !important;
+    }
+    .kanji-text { font-size: 3.5rem !important; }
+
+    
+    .choice-btn {
+        padding: 10px !important;
+        font-size: 1.1rem !important;
+        margin-bottom: 0 !important;
+    }
+    .choices-container { gap: 8px !important; }
+
+    
+    .sound-toggle-container { margin-bottom: 0 !important; }
+    .footer-note { margin-top: 10px !important; font-size: 0.7rem !important; }
+}
+
+
+@media (max-width: 480px) {
+     header.nav-bar, .sns-buttons, nav, .auth-section {
+        display: none !important;
+    }
+
+    body {
+        padding-top: 0 !important;
+    }
+
+    .main2 {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        width: 100% !important;
+        border-top: none !important; 
+        border-radius: 0 !important;
+        padding: 5px 10px !important;
+    }
+
+    
+    .question-image, .kanji-question-box {
+        height: 25vh !important; 
+        margin: 5px auto !important;
+    }
+
+    .choice-btn {
+        font-size: 1.3rem;
+        padding: 15px;
+    }
+    h1 { font-size: 1.5rem; }
+
+    .kanji-text {
+        font-size: 4rem; 
+        letter-spacing: 5px;
+    }
+    .kanji-question-box {
+        height: 200px;
+    }
+    .mobile-mini-nav { display: flex !important; }
+}
+
+
+
 </style>
 
-<div class="main2">
-  <h1>Question {{ current_index }} / 10</h1>
-
-  <p style="font-size: 1.5rem;">Player: {{ player.username }} ({{ player.country }})</p>
-
-  {% if object.image %}
-    <img src="{{ object.image.url }}" alt="Question image" style="max-width: 300px;">
-  {% endif %}
-  
-  <h2>Category: {{ object.category }}</h2>
-
-  <form method="post" action="{% url 'game_answer' object.id %}">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="neon-button">Submit Answer</button>
-  </form>
-
-  {% if message %}
-    <p style="font-weight: bold; color: yellow;">
-      {% if "Correct" in message %}
-        ✅ {{ message }}
-      {% else %}
-        ❌ {{ message }}
-      {% endif %}
-    </p>
-  {% endif %}
-
-
+<div id="game-config" 
+     data-seconds-left="{{ seconds_left|default:60 }}" 
+     data-show-result="{{ show_result|yesno:'true,false' }}"
+     data-next-url="{% url 'game_next_question' %}"
+     data-result-url="{% url 'game_result' %}"
+     data-difficulty="{{ difficulty }}"
+     data-is-correct="{{ is_correct|yesno:'true,false' }}">
 </div>
+
+<div class="main2" 
+     hx-boost="true" 
+     hx-target=".main2" 
+     hx-swap="outerHTML show:window:top" 
+     data-hint-length="{{ hint_length }}" 
+     data-total-questions="{{ total_questions }}">
+
+    <div class="mobile-mini-nav" style="display: none; justify-content: space-between; align-items: center; padding: 10px 5px; width: 100%;">
+        <a href="{% if lang_code == 'ja' %}{% url 'toppageja' %}{% elif lang_code == 'zh-hant' %}{% url 'toppagezhHANT' %}{% elif lang_code == 'zh-cn' %}{% url 'toppagezhCN' %}{% elif lang_code == 'ko' %}{% url 'toppageko' %}{% elif lang_code == 'it' %}{% url 'toppageit' %}{% elif lang_code == 'fr' %}{% url 'toppagefr' %}{% elif lang_code == 'de' %}{% url 'toppagede' %}{% elif lang_code == 'es-mx' %}{% url 'toppageesMX' %}{% elif lang_code == 'es-es' %}{% url 'toppageesES' %}{% elif lang_code == 'pt' %}{% url 'toppagept' %}{% elif lang_code == 'pt-br' %}{% url 'toppageptBR' %}{% elif lang_code == 'vi' %}{% url 'toppagevi' %}{% elif lang_code == 'th' %}{% url 'toppageth' %}{% elif lang_code == 'en-in' %}{% url 'toppageenIN' %}{% else %}{% url 'toppage' %}{% endif %}" 
+        style="color: #ffffff; text-decoration: none; font-size: 0.9rem; font-weight: bold; letter-spacing: 1px; white-space: nowrap;">
+        THANK JAPAN
+        </a>
+    
+    
+  
+        <div class="sound-toggle-container">
+            <button id="sound-toggle-btn" class="sound-toggle-btn" title="Toggle Sound">
+                <span id="sound-icon">🔊</span> 
+                    {% if lang_code == 'ja' %}音設定
+                    {% elif lang_code == 'zh-hant' %}聲音設定
+                    {% elif lang_code == 'zh-cn' %}声音设置
+                    {% elif lang_code == 'de' %}Ton
+                    {% elif lang_code == 'fr' %}Son
+                    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Sonido
+                    {% elif lang_code == 'it' %}Suono
+                    {% elif lang_code == 'ko' %}소리
+                    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Som
+                    {% elif lang_code == 'vi' %}Âm thanh
+                    {% elif lang_code == 'th' %}เสียง
+                    {% else %}Sound{% endif %}: <span id="sound-status">OFF</span>
+            </button>
+        </div>
+
+    </div>
+
+  <h1>
+    {% if lang_code == 'ja' %}問題
+    {% elif lang_code == 'zh-hant' %}題目
+    {% elif lang_code == 'zh-cn' %}题目
+    {% elif lang_code == 'de' %}Frage
+    {% elif lang_code == 'fr' %}Question
+    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Pregunta
+    {% elif lang_code == 'it' %}Domanda
+    {% elif lang_code == 'ko' %}문제
+    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Pergunta
+    {% elif lang_code == 'vi' %}Câu hỏi
+    {% elif lang_code == 'th' %}คำถาม
+    {% else %}Question{% endif %} 
+    {{ current_index }} 
+  </h1>
+
+  
+
+  {% if not show_result %}
+    <div id="timer-container" style="text-align: center; margin: 10px 0;">
+        <div style="width: 80%; height: 8px; background: #333; border-radius: 4px; margin: 0 auto 5px; overflow: hidden; border: 1px solid #444;">
+            <div id="timer-bar-fill" style="width: 100%; height: 100%; background: #00e5ff;"></div>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 20px;">
+            <span id="time-left" style="font-size: 1.5rem; font-weight: bold; color: #ffeb3b;">01:00</span>
+            <span style="font-size: 1.1rem; color: #fff; font-weight: bold;">Score: {{ score }}</span>
+        </div>
+    </div>
+  {% endif %}
+    
+    <div class="question-visual-area" style="min-height: 250px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+        {% if is_kanji_mode %}
+            <div class="kanji-question-box">
+                <h1 class="kanji-text">
+                    {{ object.kanji_name|default:object.jpname }}
+                </h1>
+            </div>
+        {% else %}
+            {% if object.image %}
+                <img src="{{ object.image.url }}" alt="Question image" class="question-image">
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <h2>
+        {% if lang_code == 'ja' %}カテゴリ
+        {% elif lang_code == 'zh-hant' %}分類
+        {% elif lang_code == 'zh-cn' %}分类
+        {% elif lang_code == 'de' %}Kategorie
+        {% elif lang_code == 'fr' %}Catégorie
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Categoría
+        {% elif lang_code == 'it' %}Categoria
+        {% elif lang_code == 'ko' %}카테고리
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Categoria
+        {% elif lang_code == 'vi' %}Danh mục
+        {% elif lang_code == 'th' %}หมวดหมู่
+        {% else %}Category
+        {% endif %}: {{ object.category|format_category:lang_code }}
+    </h2>
+
+<div class="hint-area" style="margin: 15px 0; text-align: center;">
+    {% if not show_result %}
+        
+        <button type="button" id="hint-btn" onclick="showHint()" style="
+            background: #d4af37; 
+            color: #000; 
+            border: none; 
+            padding: 8px 20px; 
+            border-radius: 20px; 
+            font-weight: bold; 
+            cursor: pointer;
+            box-shadow: 0 4px 0 #8b7326;
+            transition: 0.2s;">
+            💡
+            {% if lang_code == 'ja' %}ヒント
+            {% elif lang_code == 'zh-hant' or lang_code == 'zh-cn' %}提示
+            {% elif lang_code == 'de' %}Hinweis
+            {% elif lang_code == 'fr' %}Indice
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Pista
+            {% elif lang_code == 'it' %}Suggerimento
+            {% elif lang_code == 'ko' %}힌트
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Dica
+            {% elif lang_code == 'vi' %}Gợi ý
+            {% elif lang_code == 'th' %}คำใบ้
+            {% else %}Hint
+            {% endif %}
+        </button>
+    {% else %}
+        
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+            <button type="button" id="voice-play-btn" onclick="manualPlay()" style="
+                background: #fff; 
+                border: 3px solid #7b942e; 
+                color: #7b942e; 
+                width: 65px; 
+                height: 65px; 
+                border-radius: 50%; 
+                font-size: 2rem; 
+                cursor: pointer; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                transition: all 0.2s ease; 
+                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                padding: 0;">
+                🔊
+            </button>
+            <span style="font-size: 0.9rem; font-weight: bold; color: #7b942e; font-family: sans-serif;">
+                {% if lang_code == 'ja' %}音声を聞く
+                {% elif lang_code == 'zh-hant' %}聆聽語音
+                {% elif lang_code == 'zh-cn' %}聆听语音
+                {% elif lang_code == 'de' %}Hören
+                {% elif lang_code == 'fr' %}Écouter
+                {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Escuchar
+                {% elif lang_code == 'it' %}Ascolta
+                {% elif lang_code == 'ko' %}듣기
+                {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Ouvir
+                {% elif lang_code == 'vi' %}Nghe
+                {% elif lang_code == 'th' %}ฟังเสียง
+                {% else %}Listen{% endif %}
+            </span>
+        </div>
+    {% endif %}
+
+    
+    <p id="english-hint-text" style="display: none; font-size: 1.2rem; color: #fcd5b5; margin-top: 10px; font-family: 'Poppins', sans-serif;">
+        <!-- （既存の Meaning 表記ロジックをそのまま使用） -->
+        {% if lang_code == 'ja' %}意味:
+        {% elif lang_code == 'zh-hant' %}意思:
+        {% elif lang_code == 'zh-cn' %}含义:
+        {% elif lang_code == 'de' %}Bedeutung:
+        {% elif lang_code == 'fr' %}Signification:
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Significado:
+        {% elif lang_code == 'it' %}Significato:
+        {% elif lang_code == 'ko' %}의미:
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Significado:
+        {% elif lang_code == 'vi' %}Nghĩa:
+        {% elif lang_code == 'th' %}ความหมาย:
+        {% else %}Meaning:
+        {% endif %}
+        
+        <strong>
+            {% if lang_code == 'en-in' %}{{ object.englishname_en_in }}
+            {% elif lang_code == 'zh-hant' %}{{ object.englishname_zh_hant }}
+            {% elif lang_code == 'zh-cn' %}{{ object.englishname_zh_cn }}
+            {% elif lang_code == 'ko' %}{{ object.englishname_ko }}
+            {% elif lang_code == 'fr' %}{{ object.englishname_fr }}
+            {% elif lang_code == 'de' %}{{ object.englishname_de }}
+            {% elif lang_code == 'it' %}{{ object.englishname_it }}
+            {% elif lang_code == 'es-es' %}{{ object.englishname_es_es }}
+            {% elif lang_code == 'es-mx' %}{{ object.englishname_es_mx }}
+            {% elif lang_code == 'pt' %}{{ object.englishname_pt }}
+            {% elif lang_code == 'pt-br' %}{{ object.englishname_pt_br }}
+            {% elif lang_code == 'th' %}{{ object.englishname_th }}
+            {% elif lang_code == 'vi' %}{{ object.englishname_vi }}
+            {% else %}{{ object.englishname }}
+            {% endif %}
+        </strong>
+    </p>
+</div>
+
+
+  {% if show_result %}
+    <div class="result-section" style="text-align: center; margin-top: 20px;">
+    {% if is_correct %}
+        
+        <div id="correct-flag" data-word="{{ object.jpname }}"></div>
+        <div style="font-size: 8rem; line-height: 1;">✅</div>
+
+        <h2 style="color: #4caf50; font-size: 2em; text-shadow: 0 0 10px #4caf50;">
+            {% if lang_code == 'ja' %}✅ 正解！
+            {% elif lang_code == 'zh-hant' %}✅ 正確！
+            {% elif lang_code == 'zh-cn' %}✅ 正确！
+            {% elif lang_code == 'de' %}✅ Richtig!
+            {% elif lang_code == 'fr' %}✅ Correct !
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}✅ ¡Correcto!
+            {% elif lang_code == 'it' %}✅ Corretto!
+            {% elif lang_code == 'ko' %}✅ 정답!
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}✅ Correto!
+            {% elif lang_code == 'vi' %}✅ Chính xác!
+            {% elif lang_code == 'th' %}✅ ถูกต้อง!
+            {% else %}✅ Correct!
+            {% endif %}
+        </h2>
+
+        <div style="margin: 20px 0;">
+            <p style="font-size: 2.8em; color: #fff; line-height: 1.8;">
+                {% if object.kanji_name %}
+                    {{ object.kanji_name|ruby_smart:object.jpname }}
+                {% else %}
+                    {{ object.jpname }}
+                {% endif %}
+            </p>
+            
+
+            <p style="font-size: 2.2em; color: #fff; font-weight: bold; text-shadow: 0 0 10px rgba(76,175,80,0.3);">
+                {% if lang_code == 'ja' %}お見事！🥷
+                {% elif lang_code == 'ko' %}잘했어요! 🥷
+                {% elif lang_code == 'zh-hant' %}做得好！🥷
+                {% elif lang_code == 'zh-cn' %}做得好！🥷
+                {% elif lang_code == 'vi' %}Làm tốt lắm! 🥷
+                {% elif lang_code == 'th' %}เก่งมาก! 🥷
+                {% elif lang_code == 'fr' %}Beau travail ! 🥷
+                {% elif lang_code == 'de' %}Gute Arbeit! 🥷
+                {% elif lang_code == 'it' %}Ottimo lavoro! 🥷
+                {% elif lang_code == 'es-es' %}¡Buen trabajo! 🥷
+                {% elif lang_code == 'es-mx' %}¡Excelente! 🥷
+                {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Bom trabalho! 🥷
+                {% elif lang_code == 'en-in' %}Good Job! 🥷
+                {% else %}Good Job! 🥷
+                {% endif %}
+            </p>
+        </div>
+
+    {% else %}
+        
+        <div id="incorrect-flag" data-word="{{ object.jpname }}"></div>
+        <div style="font-size: 8rem; line-height: 1;">❌</div>
+
+        <h2 style="color: #ff4081; font-size: 2em; text-shadow: 0 0 10px #ff4081;">
+            {% if lang_code == 'ja' %}❌ 不正解...
+            {% elif lang_code == 'zh-hant' %}❌ 錯誤...
+            {% elif lang_code == 'zh-cn' %}❌ 错误...
+            {% elif lang_code == 'de' %}❌ Falsch...
+            {% elif lang_code == 'fr' %}❌ Incorrect...
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}❌ Incorrecto...
+            {% elif lang_code == 'it' %}❌ Sbagliato...
+            {% elif lang_code == 'ko' %}❌ 오답...
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}❌ Incorreto...
+            {% elif lang_code == 'vi' %}❌ Sai rồi...
+            {% elif lang_code == 'th' %}❌ ผิด...
+            {% else %}❌ Incorrect...
+            {% endif %}
+        </h2>
+
+        <div style="margin: 20px 0;">
+            <p style="font-size: 1.8em; color: #fff; line-height: 1.8;">
+                {% if lang_code == 'ja' %}正解:
+                {% elif lang_code == 'zh-hant' %}正確:
+                {% elif lang_code == 'zh-cn' %}正确:
+                {% elif lang_code == 'de' %}Richtig:
+                {% elif lang_code == 'fr' %}Correct:
+                {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Correcto:
+                {% elif lang_code == 'it' %}Corretto:
+                {% elif lang_code == 'ko' %}정답:
+                {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Correto:
+                {% elif lang_code == 'vi' %}Đáp án đúng:
+                {% elif lang_code == 'th' %}คำตอบที่ถูกต้อง:
+                {% else %}Correct:
+                {% endif %}
+                <strong>
+                    {% if object.kanji_name %}
+                        {{ object.kanji_name|ruby_smart:object.jpname }}
+                    {% else %}
+                        {{ object.jpname }}
+                    {% endif %}
+                </strong>
+            </p>
+            
+            <p style="font-size: 2.0em; color: #fff; font-family: 'Poppins', sans-serif;">
+                {% if lang_code == 'ja' %}意味:
+                {% elif lang_code == 'zh-hant' %}意思:
+                {% elif lang_code == 'zh-cn' %}含义:
+                {% elif lang_code == 'de' %}Bedeutung:
+                {% elif lang_code == 'fr' %}Signification:
+                {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Significado:
+                {% elif lang_code == 'it' %}Significato:
+                {% elif lang_code == 'ko' %}의미:
+                {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Significado:
+                {% elif lang_code == 'vi' %}Nghĩa:
+                {% elif lang_code == 'th' %}ความหมาย:
+                {% else %}Meaning:
+                {% endif %}
+
+                <strong>
+                    {% if lang_code == 'en-in' %}{{ object.englishname_en_in }}
+                    {% elif lang_code == 'zh-hant' %}{{ object.englishname_zh_hant }}
+                    {% elif lang_code == 'zh-cn' %}{{ object.englishname_zh_cn }}
+                    {% elif lang_code == 'ko' %}{{ object.englishname_ko }}
+                    {% elif lang_code == 'fr' %}{{ object.englishname_fr }}
+                    {% elif lang_code == 'de' %}{{ object.englishname_de }}
+                    {% elif lang_code == 'it' %}{{ object.englishname_it }}
+                    {% elif lang_code == 'es-es' %}{{ object.englishname_es_es }}
+                    {% elif lang_code == 'es-mx' %}{{ object.englishname_es_mx }}
+                    {% elif lang_code == 'pt' %}{{ object.englishname_pt }}
+                    {% elif lang_code == 'pt-br' %}{{ object.englishname_pt_br }}
+                    {% elif lang_code == 'th' %}{{ object.englishname_th }}
+                    {% elif lang_code == 'vi' %}{{ object.englishname_vi }}
+                    {% else %}{{ object.englishname }}
+                    {% endif %}
+                </strong>
+            </p>
+        </div>
+    {% endif %}
+
+    
+    <div class="result-actions" style="margin-top: 30px; text-align: center;">
+        {% if difficulty == 'single' %}
+            
+            {% if is_premium_mode %}
+                <a href="{% url 'detail_premium' category=object.category slug=object.slug %}?origin=category" class="next-btn btn-back-premium" style="display: inline-block; background: #00bcd4; color: #fff; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: bold;">
+                    {% if lang_code == 'ja' %}✅ 完了してレッスンに戻る
+                    {% elif lang_code == 'zh-hant' %}✅ 完成並返回課程
+                    {% elif lang_code == 'zh-cn' %}✅ 完成并返回课程
+                    {% elif lang_code == 'de' %}✅ Abschließen & zur Lektion zurück
+                    {% elif lang_code == 'fr' %}✅ Terminer et revenir à la leçon
+                    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}✅ Finalizar y volver a la lección
+                    {% elif lang_code == 'it' %}✅ Completa e torna alla lezione
+                    {% elif lang_code == 'ko' %}✅ 완료하고 레슨으로 돌아가기
+                    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}✅ Concluir e voltar à lição
+                    {% elif lang_code == 'vi' %}✅ Hoàn thành và quay lại bài học
+                    {% elif lang_code == 'th' %}✅ เสร็จสิ้นและกลับไปที่บทเรียน
+                    {% else %}✅ Finish & Back to Lesson
+                    {% endif %}
+                </a>
+            {% else %}
+                <a href="{% url 'category_detail' category=object.category slug=object.slug %}?origin=category" class="next-btn btn-back-free" style="display: inline-block; background: #00bcd4; color: #fff; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: bold;">
+                    {% if lang_code == 'ja' %}✅ 完了してレッスンに戻る
+                    {% elif lang_code == 'zh-hant' %}✅ 完成並返回課程
+                    {% elif lang_code == 'zh-cn' %}✅ 完成并返回课程
+                    {% elif lang_code == 'de' %}✅ Abschließen & zur Lektion zurück
+                    {% elif lang_code == 'fr' %}✅ Terminer et revenir à la leçon
+                    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}✅ Finalizar y volver a la lección
+                    {% elif lang_code == 'it' %}✅ Completa e torna alla lezione
+                    {% elif lang_code == 'ko' %}✅ 완료하고 레슨으로 돌아가기
+                    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}✅ Concluir e voltar à lição
+                    {% elif lang_code == 'vi' %}✅ Hoàn thành và quay lại bài học
+                    {% elif lang_code == 'th' %}✅ เสร็จสิ้นและกลับไปที่บทเรียน
+                    {% else %}✅ Finish & Back to Lesson
+                    {% endif %}
+                </a>
+            {% endif %}
+        {% else %}
+            
+            <p style="color: #aaa; font-style: italic; margin-bottom: 10px;">
+                {% if lang_code == 'ja' %}次の問題へ（4秒後）...
+                {% elif lang_code == 'zh-hant' %}下一題（4秒後）...
+                {% elif lang_code == 'zh-cn' %}下一题（4秒后）...
+                {% elif lang_code == 'de' %}Nächste Frage (in 4 Sek.)...
+                {% elif lang_code == 'fr' %}Question suivante (4s)...
+                {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Siguiente pregunta (4s)...
+                {% elif lang_code == 'it' %}Prossima domanda (4s)...
+                {% elif lang_code == 'ko' %}다음 문제로（4초 후）...
+                {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Próxima pergunta (4s)...
+                {% elif lang_code == 'vi' %}Câu hỏi tiếp theo (4 giây)...
+                {% elif lang_code == 'th' %}คำถามถัดไป (ใน 4 วินาที)...
+                {% else %}Next in 4s...
+                {% endif %}
+            </p>
+            
+            {% if is_last_question %}
+                <a href="{% url 'game_next_question' %}" class="next-btn btn-game-next" style="display: inline-block; background: #00e5ff; color: #000; padding: 15px 30px; border-radius: 30px; text-decoration: none; font-weight: bold;">
+                    {% if lang_code == 'ja' %}🏁 ゲーム結果を見る
+                    {% elif lang_code == 'zh-hant' %}🏁 查看遊戲結果
+                    {% elif lang_code == 'zh-cn' %}🏁 查看游戏结果
+                    {% elif lang_code == 'de' %}🏁 Spielergebnisse anzeigen
+                    {% elif lang_code == 'fr' %}🏁 Voir les résultats du jeu
+                    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}🏁 Ver resultados del juego
+                    {% elif lang_code == 'it' %}🏁 Vedi i risultati del gioco
+                    {% elif lang_code == 'ko' %}🏁 게임 결과 보기
+                    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}🏁 Ver resultados do jogo
+                    {% elif lang_code == 'vi' %}🏁 Xem kết quả trò chơi
+                    {% elif lang_code == 'th' %}ดูผลลัพธ์ของเกม
+                    {% else %}🏁 See Game Results
+                    {% endif %}
+                </a>
+            {% else %}
+                <a href="{% url 'game_next_question' %}" class="next-btn btn-game-next" style="display: inline-block; background: #00e5ff; color: #000; padding: 15px 30px; border-radius: 30px; text-decoration: none; font-weight: bold;">
+                    {% if lang_code == 'ja' %}次の問題へ ➔
+                    {% elif lang_code == 'zh-hant' %}下一題 ➔
+                    {% elif lang_code == 'zh-cn' %}下一题 ➔
+                    {% elif lang_code == 'de' %}Nächste Frage ➔
+                    {% elif lang_code == 'fr' %}Question suivante ➔
+                    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Siguiente pregunta ➔
+                    {% elif lang_code == 'it' %}Domanda successiva ➔
+                    {% elif lang_code == 'ko' %}다음 문제 ➔
+                    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Próxima pergunta ➔
+                    {% elif lang_code == 'vi' %}Câu hỏi tiếp theo ➔
+                    {% elif lang_code == 'th' %}คำถามถัดไป ➔
+                    {% else %}Next Question ➔
+                    {% endif %}
+                </a>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+
+  {% else %}
+
+    <div class="quiz-section" style="margin-top: 20px;">
+        <form method="post" action="{% url 'game_answer' object.id %}" id="answer-form" hx-post="{% url 'game_answer' object.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="answer" id="answer-input">
+            <div class="choices-container" style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
+                {% for choice in choices %}
+                    <button type="button" class="choice-btn" onclick="submitChoice('{{ choice.name }}')">
+                        {% if is_kanji_mode %}
+                            {{ choice.jpname }}
+                        {% else %}
+    
+                            {% if choice.kanji_name %}
+                                {{ choice.kanji_name|ruby_smart:choice.jpname }}
+                            {% else %}
+                                {{ choice.jpname }}
+                            {% endif %}
+                        {% endif %}
+                    </button>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+  {% endif %}
+
+  <div class="footer-note">
+    <p>
+        {% if lang_code == 'ja' %}✨ 続けよう
+        {% elif lang_code == 'zh-hant' %}✨ 繼續加油
+        {% elif lang_code == 'zh-cn' %}✨ 继续加油
+        {% elif lang_code == 'de' %}✨ Weiter so
+        {% elif lang_code == 'fr' %}✨ Continue
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}✨ Sigue adelante
+        {% elif lang_code == 'it' %}✨ Continua così
+        {% elif lang_code == 'ko' %}✨ 계속 가자
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}✨ Continue assim
+        {% elif lang_code == 'vi' %}✨ Tiếp tục nhé
+        {% elif lang_code == 'th' %}✨ ไปต่อเลย
+        {% else %}✨ Keep going
+        {% endif %}
+        , {% if player %}{{ player.username }}{% else %}
+        {% if lang_code == 'ja' %}ゲスト
+        {% elif lang_code == 'zh-hant' %}訪客
+        {% elif lang_code == 'zh-cn' %}访客
+        {% elif lang_code == 'de' %}Gast
+        {% elif lang_code == 'fr' %}Invité
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Invitado
+        {% elif lang_code == 'it' %}Ospite
+        {% elif lang_code == 'ko' %}게스트
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Convidado
+        {% elif lang_code == 'vi' %}Khách
+        {% elif lang_code == 'th' %}ผู้เยี่ยมชม
+        {% else %}Guest
+        {% endif %}
+    {% endif %}!</p>
+    <p><a href="{% url 'game_result' %}">
+        {% if lang_code == 'ja' %}終了して結果を見る
+        {% elif lang_code == 'zh-hant' %}退出並查看結果
+        {% elif lang_code == 'zh-cn' %}退出并查看结果
+        {% elif lang_code == 'de' %}Beenden & Ergebnisse anzeigen
+        {% elif lang_code == 'fr' %}Quitter et voir les résultats
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Salir y ver resultados
+        {% elif lang_code == 'it' %}Esci e visualizza i risultati
+        {% elif lang_code == 'ko' %}종료하고 결과 보기
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Sair e ver resultados
+        {% elif lang_code == 'vi' %}Thoát và xem kết quả
+        {% elif lang_code == 'th' %}ออกและดูผลลัพธ์
+        {% else %}Quit & View Results
+        {% endif %}
+
+    </a> | <a href="{% if lang_code == 'ja' %}{% url 'player_logout' %}?lang=ja{% elif lang_code == 'zh-hant' %}{% url 'player_logout' %}?lang=zh-hant{% elif lang_code == 'zh-cn' %}{% url 'player_logout' %}?lang=zh-cn{% elif lang_code == 'ko' %}{% url 'player_logout' %}?lang=ko{% elif lang_code == 'de' %}{% url 'player_logout' %}?lang=de{% elif lang_code == 'fr' %}{% url 'player_logout' %}?lang=fr{% elif lang_code == 'es-es' %}{% url 'player_logout' %}?lang=es-es{% elif lang_code == 'es-mx' %}{% url 'player_logout' %}?lang=es-mx{% elif lang_code == 'it' %}{% url 'player_logout' %}?lang=it{% elif lang_code == 'pt' %}{% url 'player_logout' %}?lang=pt{% elif lang_code == 'pt-br' %}{% url 'player_logout' %}?lang=pt-br{% elif lang_code == 'vi' %}{% url 'player_logout' %}?lang=vi{% elif lang_code == 'th' %}{% url 'player_logout' %}?lang=th{% elif lang_code == 'en-in' %}{% url 'player_logout' %}?lang=en-in{% else %}{% url 'player_logout' %}{% endif %}">
+        {% if lang_code == 'ja' %}ログアウト
+        {% elif lang_code == 'zh-hant' %}登出
+        {% elif lang_code == 'zh-cn' %}退出登录
+        {% elif lang_code == 'de' %}Abmelden
+        {% elif lang_code == 'fr' %}Se déconnecter
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Cerrar sesión
+        {% elif lang_code == 'it' %}Disconnetti
+        {% elif lang_code == 'ko' %}로그아웃
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Sair
+        {% elif lang_code == 'vi' %}Đăng xuất
+        {% elif lang_code == 'th' %}ออกจากระบบ
+        {% else %}Log out
+        {% endif %}
+    </a></p>
+  </div>
+</div>
+
+<script>
+let timerInterval;
+let timeLeft;
+let isSoundOn;
+let navDone = false;
+let audioCtx = null;
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+function initSound() {
+    const saved = localStorage.getItem('thankjapan_sound');
+    if (saved === 'on') {
+        isSoundOn = true;
+    } else if (saved === 'off') {
+        isSoundOn = false;
+    } else {
+        isSoundOn = !isMobile;
+    }
+}
+initSound();
+
+function manualPlay() {
+    // ユーザーがボタンを叩いたので、ここで音声をアンロックする
+    unlockAudio();
+    
+    const config = document.getElementById('game-config');
+    const isCorrect = config.getAttribute('data-is-correct') === 'true';
+    
+    // correct-flag または incorrect-flag から単語を取得
+    const flagId = isCorrect ? 'correct-flag' : 'incorrect-flag';
+    const word = document.getElementById(flagId)?.getAttribute('data-word');
+
+    if (isCorrect) {
+        
+        playChime();
+
+        if (word) setTimeout(() => { speakJapanese(word); }, 600);
+    } else {
+        
+        if (word) speakJapanese(word);
+    }
+}
+
+function speakJapanese(text, isAuto = false) {
+    if (isAuto && !isSoundOn) return;
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ja-JP';
+        u.rate = 0.85;
+        setTimeout(() => { window.speechSynthesis.speak(u); }, 100);
+    }
+}
+
+function playChime() {
+    if (!isSoundOn) return;
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const t = audioCtx.currentTime;
+        const o1 = audioCtx.createOscillator();
+        const g1 = audioCtx.createGain();
+        o1.connect(g1); g1.connect(audioCtx.destination);
+        o1.type = 'sine'; o1.frequency.setValueAtTime(1046.5, t);
+        g1.gain.setValueAtTime(0, t);
+        g1.gain.linearRampToValueAtTime(0.1, t + 0.05);
+        g1.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+        o1.start(t); o1.stop(t + 0.5);
+
+        const o2 = audioCtx.createOscillator();
+        const g2 = audioCtx.createGain();
+        o2.connect(g2); g2.connect(audioCtx.destination);
+        o2.type = 'sine'; o2.frequency.setValueAtTime(880, t + 0.4);
+        g2.gain.setValueAtTime(0, t + 0.4);
+        g2.gain.linearRampToValueAtTime(0.1, t + 0.45);
+        g2.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+        o2.start(t + 0.4); o2.stop(t + 1.2);
+    } catch (e) {}
+}
+
+function unlockAudio() {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
+    }
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!audioCtx) audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function submitChoice(value) {
+    if (navDone) return;
+    if (isSoundOn) {
+        unlockAudio(); 
+        setTimeout(() => { proceedSubmit(value); }, 100);
+    } else {
+        proceedSubmit(value);
+    }
+}
+
+function proceedSubmit(value) {
+    if (timerInterval) clearInterval(timerInterval);
+    const input = document.getElementById('answer-input');
+    const form = document.getElementById('answer-form');
+    if (input && form) {
+        let timeInput = document.getElementById('time-left-input');
+        if (!timeInput) {
+            timeInput = document.createElement('input');
+            timeInput.type = 'hidden';
+            timeInput.name = 'seconds_left';
+            timeInput.id = 'time-left-input';
+            form.appendChild(timeInput);
+        }
+        timeInput.value = timeLeft;
+        input.value = value;
+        form.submit();
+    }
+}
+
+function showHint() {
+    if (isSoundOn) unlockAudio();
+    const b = document.getElementById('hint-btn');
+    const t = document.getElementById('english-hint-text');
+    if (b && t) { t.style.display = 'block'; b.style.display = 'none'; }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const config = document.getElementById('game-config');
+    if (!config) return;
+
+    const sBtn = document.getElementById('sound-toggle-btn');
+    const sIcon = document.getElementById('sound-icon');
+    const sStatus = document.getElementById('sound-status');
+
+    const updateUI = () => {
+        if (sIcon && sStatus) {
+            sIcon.textContent = isSoundOn ? '🔊' : '🔇';
+            sStatus.textContent = isSoundOn ? 'ON' : 'OFF';
+        }
+    };
+    updateUI();
+
+    if (sBtn) {
+        sBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            isSoundOn = !isSoundOn;
+            localStorage.setItem('thankjapan_sound', isSoundOn ? 'on' : 'off');
+            updateUI();
+            if (isSoundOn) {
+                unlockAudio();
+                setTimeout(playChime, 100);
+            }
+        });
+    }
+
+    const showResult = config.getAttribute('data-show-result') === 'true';
+    const isCorrect = config.getAttribute('data-is-correct') === 'true';
+
+    if (showResult) {
+        if (isCorrect) confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: ['#b7282e', '#7b942e', '#e0d5c0', '#ffffff'] });
+
+        const triggerSound = () => {
+            if (!isSoundOn) return;
+            const w = document.getElementById(isCorrect ? 'correct-flag' : 'incorrect-flag')?.getAttribute('data-word');
+            if (isCorrect) playChime();
+            if (w) setTimeout(() => speakJapanese(w, true), 300);
+        };
+
+        const onceInteraction = () => {
+            if (isSoundOn) {
+                unlockAudio();
+                triggerSound();
+            }
+            document.removeEventListener('touchstart', onceInteraction);
+            document.removeEventListener('mousedown', onceInteraction);
+        };
+        
+        document.addEventListener('touchstart', onceInteraction);
+        document.addEventListener('mousedown', onceInteraction);
+        
+        setTimeout(triggerSound, 200);
+
+        const nextUrl = config.getAttribute('data-next-url');
+        if (config.getAttribute('data-difficulty') !== 'single' && nextUrl) {
+            setTimeout(() => {
+                if (!navDone) { navDone = true; window.location.href = nextUrl; }
+            }, isCorrect ? 4000 : 8000);
+        }
+        return;
+    }
+
+    timeLeft = parseInt(config.getAttribute('data-seconds-left') || "60");
+    const tDisp = document.getElementById('time-left');
+    const tBar = document.getElementById('timer-bar-fill');
+    const rUrl = config.getAttribute('data-result-url');
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft >= 0) {
+            if (tDisp) {
+                tDisp.textContent = String(Math.floor(timeLeft / 60)).padStart(2, '0') + ":" + String(timeLeft % 60).padStart(2, '0');
+                if (timeLeft <= 10) tDisp.style.color = "#ff4081";
+            }
+            if (tBar) tBar.style.width = (timeLeft / 60 * 100) + "%";
+        } else {
+            clearInterval(timerInterval);
+            if (!navDone) { navDone = true; window.location.href = rUrl; }
+        }
+    }, 1000);
+});
+</script>
+
 {% endblock %}

@@ -12,7 +12,13 @@ django-cloudinary-storage==0.3.0
 
 django-cors-headers==4.7.0
 
-django-ratelimit==4.1.0
 
 paypalrestsdk==1.13.3
 pyopenssl==25.1.0
+
+django-recaptcha==4.1.0
+
+django-allauth==65.16.1
+PyJWT==2.12.1
+requests-oauthlib==2.0.0
+oauthlib==3.3.1

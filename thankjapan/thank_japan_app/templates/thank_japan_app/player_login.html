@@ -1,0 +1,744 @@
+{% extends 'base/basecategory.html' %}
+{% load socialaccount %}
+{% block title %}Login | ThankJapan{% endblock %}
+
+{% block content %}
+
+<style>
+  body {
+    background-color: #e0d9b8;
+    background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px, transparent 1px, transparent 10px);
+    margin: 0;
+  }
+
+  .main2 {
+    max-width: 420px;
+    margin: 90px auto 40px;
+    background: #fffaf0;
+    padding: 40px 35px;
+    border-radius: 4px;
+    border: 4px solid #5d5245;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    font-family: 'Sawarabi Mincho', serif;
+    box-sizing: border-box;
+  }
+
+  h2 {
+    text-align: center;
+    color: #3e4a2a;
+    margin-bottom: 30px;
+    font-weight: 700;
+    border-bottom: 2px solid #8b9d77;
+    display: block;
+    padding-bottom: 10px;
+  }
+
+  ul {
+    padding: 0;
+    margin-bottom: 20px;
+  }
+
+  ul li {
+    list-style: none;
+    background: #fdf2f2;
+    color: #b22d35;
+    padding: 10px 15px;
+    border-left: 5px solid #b22d35;
+    margin-bottom: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  form label {
+    display: block;
+    font-weight: 600;
+    color: #5d5245;
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+  }
+
+  form input[type="text"],
+  form input[type="password"] {
+    width: 100%;
+    padding: 14px 15px;
+    margin-bottom: 20px;
+    border: 1px solid #a8a095;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    background-color: #fdfdfd;
+  }
+
+  form input[type="text"]:focus,
+  form input[type="password"]:focus {
+    outline: none;
+    border-color: #5d6d3e;
+    box-shadow: 0 0 8px rgba(93, 109, 62, 0.3);
+  }
+
+  button {
+    width: 100%;
+    padding: 16px 0;
+    background: #5d6d3e;
+    border: none;
+    border-radius: 30px;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #3e4a2a;
+    transition: all 0.2s ease;
+    margin-top: 10px;
+  }
+
+  button:hover {
+    background: #4e5b34;
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #3e4a2a;
+  }
+
+  p {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 0.95rem;
+    color: #5d5245;
+  }
+
+  p a {
+    color: #b22d35;
+    font-weight: bold;
+    text-decoration: none;
+  }
+
+  .btn-more {
+    display: inline-block;
+    background: #ffb347;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 20px;
+    transition: background 0.3s;
+  }
+  .btn-more:hover {
+    background: #ff9642;
+  }
+
+
+  @media (max-width: 900px) {
+    .main {
+      margin-left: 0 !important;
+      width: 100% !important;
+    }
+
+    .main2 {
+      width: 92% !important;
+      max-width: 400px !important;
+      margin: 130px auto 40px !important;
+      padding: 30px 20px !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .main2 {
+      margin-top: 100px !important;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .main2 {
+      margin-top: 150px !important;
+    }
+  }
+
+</style>
+
+
+<div class="main2">
+  <h2>
+    {% if lang_code == 'ja' %}ログイン
+    {% elif lang_code == 'zh-hant' %}登入
+    {% elif lang_code == 'zh-cn' %}登录
+    {% elif lang_code == 'ko' %}로그인
+    {% elif lang_code == 'de' %}Anmelden
+    {% elif lang_code == 'fr' %}Connexion
+    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Iniciar sesión
+    {% elif lang_code == 'it' %}Accedi
+    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Entrar
+    {% elif lang_code == 'vi' %}Đăng nhập
+    {% elif lang_code == 'th' %}เข้าสู่ระบบ
+    {% else %}Login
+    {% endif %}
+  </h2>
+
+  {% if messages %}
+  <ul class="messages" style="padding: 0; list-style: none;">
+    {% for message in messages %}
+      <li style="color: #d93025; font-size: 0.9em; margin-bottom: 10px;">
+        
+        {# --- 1. ログイン失敗 (extra_tags="login_invalid" の場合) --- #}
+        {% if "login_invalid" in message.tags %}
+          {% if lang_code == 'ja' %}ユーザー名またはパスワードが正しくありません。
+          {% elif lang_code == 'zh-hant' %}使用者名稱或密碼不正確。
+          {% elif lang_code == 'zh-cn' %}用户名或密码不正确。
+          {% elif lang_code == 'ko' %}사용자 이름 또는 비밀번호가 올바르지 않습니다.
+          {% elif lang_code == 'de' %}Benutzername oder Passwort ist falsch.
+          {% elif lang_code == 'fr' %}Nom d’utilisateur ou mot de passe incorrect.
+          {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Nombre de usuario o contraseña incorrectos.
+          {% elif lang_code == 'it' %}Nome utente o password non corretti.
+          {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Nome de usuário ou senha incorretos.
+          {% elif lang_code == 'vi' %}Tên người dùng hoặc mật khẩu không đúng.
+          {% elif lang_code == 'th' %}ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง
+          {% else %}Invalid username or password.
+          {% endif %}
+
+        {# --- 2. その他のシステムメッセージ (ログアウト、登録完了など) --- #}
+        {% else %}
+          {% if lang_code == 'ja' %}
+            {% if "Logged out" in message.message %}ログアウトしました。
+            {% elif "Account created" in message.message %}アカウントが作成されました！ログインしてください。
+            {% elif "Please log in" in message.message %}続行するにはログインしてください。
+            {% else %}{{ message }}{% endif %}
+          {% elif lang_code == 'zh-hant' %}
+            {% if "Logged out" in message.message %}您已成功登出。
+            {% elif "Account created" in message.message %}帳號已建立！請登入。
+            {% elif "Please log in" in message.message %}請登入以繼續。
+            {% else %}{{ message }}{% endif %}
+          {% elif lang_code == 'zh-cn' %}
+            {% if "Logged out" in message.message %}您已成功登出。
+            {% elif "Account created" in message.message %}账号已建立！请登录。
+            {% elif "Please log in" in message.message %}请登录以继续。
+            {% else %}{{ message }}{% endif %}
+          {% elif lang_code == 'ko' %}
+            {% if "Logged out" in message.message %}성공적으로 로그아웃되었습니다.
+            {% elif "Account created" in message.message %}계정이 생성되었습니다! 로그인해 주세요.
+            {% elif "Please log in" in message.message %}계속하려면 로그인하세요.
+            {% else %}{{ message }}{% endif %}
+          {% elif lang_code == 'de' %}
+            {% if "Logged out" in message.message %}Erfolgreich abgemeldet.
+            {% elif "Account created" in message.message %}Konto erstellt! Bitte anmelden.
+            {% elif "Please log in" in message.message %}Bitte melden Sie sich an, um fortzufahren.
+            {% else %}{{ message }}{% endif %}
+          {% elif lang_code == 'fr' %}
+            {% if "Logged out" in message.message %}Déconnexion réussie.
+            {% elif "Account created" in message.message %}Compte créé ! Veuillez vous connecter.
+            {% elif "Please log in" in message.message %}Veuillez vous connecter pour continuer.
+            {% else %}{{ message }}{% endif %}
+          {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+            {% if "Logged out" in message.message %}Has cerrado sesión correctamente.
+            {% elif "Account created" in message.message %}¡Cuenta creada! Por favor, inicia sesión.
+            {% elif "Please log in" in message.message %}Inicia sesión para continuar.
+            {% else %}{{ message }}{% endif %}
+          {% elif lang_code == 'it' %}
+            {% if "Logged out" in message.message %}Disconnessione effettuata.
+            {% elif "Account created" in message.message %}Account creato! Effettua l'accesso.
+            {% elif "Please log in" in message.message %}Effettua l'accesso per continuare.
+            {% else %}{{ message }}{% endif %}
+          {% elif lang_code == 'pt' %}
+            {% if "Logged out" in message.message %}Sessão encerrada com sucesso.
+            {% elif "Account created" in message.message %}Conta criada! Por favor, inicie sessão.
+            {% elif "Please log in" in message.message %}Inicie sessão para continuar.
+            {% else %}{{ message }}{% endif %}
+          {% elif lang_code == 'pt-br' %}
+            {% if "Logged out" in message.message %}Você saiu com sucesso.
+            {% elif "Account created" in message.message %}Conta criada! Por favor, faça login.
+            {% elif "Please log in" in message.message %}Faça login para continuar.
+            {% else %}{{ message }}{% endif %}
+          {% elif lang_code == 'vi' %}
+            {% if "Logged out" in message.message %}Đăng xuất thành công.
+            {% elif "Account created" in message.message %}Tài khoản đã được tạo! Vui lòng đăng nhập.
+            {% elif "Please log in" in message.message %}Vui lòng đăng nhập để tiếp tục.
+            {% else %}{{ message }}{% endif %}
+          {% elif lang_code == 'th' %}
+            {% if "Logged out" in message.message %}ออกจากระบบเรียบร้อยแล้ว
+            {% elif "Account created" in message.message %}สร้างบัญชีเรียบร้อยแล้ว! กรุณาเข้าสู่ระบบ
+            {% elif "Please log in" in message.message %}กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ
+            {% else %}{{ message }}{% endif %}
+          {% elif lang_code == 'en-in' %}
+            {% if "Logged out" in message.message %}Logged out successfully.
+            {% elif "Account created" in message.message %}Account created! Please log in.
+            {% elif "Please log in" in message.message %}Please log in to continue.
+            {% else %}{{ message }}{% endif %}
+          {% else %}
+            {{ message }}
+          {% endif %}
+        {% endif %}
+
+      </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <!-- Google Login Section Start -->
+<div style="margin-bottom: 25px; text-align: center;">
+  <a href="{% provider_login_url 'google' %}" style="
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    color: #757575;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    padding: 10px 16px;
+    text-decoration: none;
+    font-family: 'Roboto', arial, sans-serif;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    transition: background-color 0.2s;
+  " onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='#ffffff'">
+    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="18px" height="18px" viewBox="0 0 48 48" style="margin-right: 10px;">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+    </svg>
+    <span>
+      {% if lang_code == 'ja' %}Googleでログイン
+      {% elif lang_code == 'zh-hant' %}使用 Google 登入
+      {% elif lang_code == 'zh-cn' %}使用 Google 登录
+      {% elif lang_code == 'ko' %}Google 계정으로 로그인
+      {% elif lang_code == 'de' %}Mit Google anmelden
+      {% elif lang_code == 'fr' %}Se connecter avec Google
+      {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Iniciar sesión con Google
+      {% elif lang_code == 'it' %}Accedi con Google
+      {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Entrar com Google
+      {% elif lang_code == 'vi' %}Đăng nhập bằng Google
+      {% elif lang_code == 'th' %}เข้าสู่ระบบด้วย Google
+      {% else %}Log in with Google
+      {% endif %}
+    </span>
+  </a>
+
+  <!-- 区切り線 -->
+  <div style="margin-top: 20px; display: flex; align-items: center; color: #888; font-size: 0.9em;">
+    <div style="flex: 1; height: 1px; background: #ddd;"></div>
+    <div style="padding: 0 10px;">
+        {% if lang_code == 'ja' %}または
+        {% elif lang_code == 'zh-hant' %}或
+        {% elif lang_code == 'zh-cn' %}或
+        {% elif lang_code == 'ko' %}또는
+        {% elif lang_code == 'de' %}oder
+        {% elif lang_code == 'fr' %}ou
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}o
+        {% elif lang_code == 'it' %}o
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}ou
+        {% elif lang_code == 'vi' %}hoặc
+        {% elif lang_code == 'th' %}หรือ
+        {% else %}or
+        {% endif %}
+    </div>
+    <div style="flex: 1; height: 1px; background: #ddd;"></div>
+  </div>
+</div>
+<!-- Google Login Section End -->
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    
+    <p>
+      <label for="id_username">
+        {% if lang_code == 'ja' %}ユーザー名
+        {% elif lang_code == 'zh-hant' %}用戶名稱
+        {% elif lang_code == 'zh-cn' %}用户名
+        {% elif lang_code == 'ko' %}사용자 이름
+        {% elif lang_code == 'de' %}Benutzername
+        {% elif lang_code == 'fr' %}Nom d'utilisateur
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Nombre de usuario
+        {% elif lang_code == 'it' %}Nome utente
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Nome de usuário
+        {% elif lang_code == 'vi' %}Tên người dùng
+        {% elif lang_code == 'th' %}ชื่อผู้ใช้
+        {% else %}Username
+        {% endif %}
+      </label>
+
+      <input type="text" name="username" id="id_username" required 
+       placeholder="{% if lang_code == 'ja' %}ユーザー名を入力{% elif lang_code == 'zh-hant' %}輸入用戶名稱{% elif lang_code == 'zh-cn' %}输入用户名{% elif lang_code == 'ko' %}사용자 이름 입력{% elif lang_code == 'de' %}Benutzername eingeben{% elif lang_code == 'fr' %}Entrez votre nom d'utilisateur{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Introduce tu nombre de usuario{% elif lang_code == 'it' %}Inserisci il tuo nome utente{% elif lang_code == 'pt' or lang_code == 'pt-br' %}Digite seu nome de usuário{% elif lang_code == 'vi' %}Nhập tên người dùng{% elif lang_code == 'th' %}ป้อนชื่อผู้ใช้ของคุณ{% else %}Enter your username{% endif %}" 
+       value="{{ form.username.value|default:'' }}"
+       style="width: 100%; padding: 8px; border: 1px solid #a6a6a6; border-radius: 3px;">
+
+    </p>
+
+    <p>
+      <label for="id_password">
+        {% if lang_code == 'ja' %}パスワード
+        {% elif lang_code == 'zh-hant' %}密碼
+        {% elif lang_code == 'zh-cn' %}密码
+        {% elif lang_code == 'ko' %}비밀번호
+        {% elif lang_code == 'de' %}Passwort
+        {% elif lang_code == 'fr' %}Mot de passe
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Contraseña
+        {% elif lang_code == 'it' %}Password
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Senha
+        {% elif lang_code == 'vi' %}Mật khẩu
+        {% elif lang_code == 'th' %}รหัสผ่าน
+        {% else %}Password
+        {% endif %}
+      </label>
+      
+      <input type="password" name="password" id="id_password" required 
+       placeholder="{% if lang_code == 'ja' %}パスワードを入力{% elif lang_code == 'zh-hant' %}輸入密碼{% elif lang_code == 'zh-cn' %}输入密码{% elif lang_code == 'ko' %}비밀번호 입력{% elif lang_code == 'de' %}Passwort eingeben{% elif lang_code == 'fr' %}Entrez votre mot de passe{% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Introduce tu contraseña{% elif lang_code == 'it' %}Inserisci la password{% elif lang_code == 'pt' or lang_code == 'pt-br' %}Digite sua senha{% elif lang_code == 'vi' %}Nhập mật khẩu{% elif lang_code == 'th' %}ป้อนรหัสผ่านของคุณ{% else %}Enter your password{% endif %}"
+       style="width: 100%; padding: 8px; border: 1px solid #a6a6a6; border-radius: 3px;">
+       
+    </p>
+
+
+    <button type="submit" style="width: 100%; padding: 10px; background: linear-gradient(to bottom, #f7dfa5, #f0c14b); border: 1px solid #a88734; border-radius: 3px; color: #111; font-size: 1em; cursor: pointer; margin-top: 10px;">
+      {% if lang_code == 'ja' %}ログイン
+      {% elif lang_code == 'zh-hant' %}登入
+      {% elif lang_code == 'zh-cn' %}登录
+      {% elif lang_code == 'ko' %}로그인
+      {% elif lang_code == 'de' %}Anmelden
+      {% elif lang_code == 'fr' %}Connexion
+      {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Iniciar sesión
+      {% elif lang_code == 'it' %}Accedi
+      {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Entrar
+      {% elif lang_code == 'vi' %}Đăng nhập
+      {% elif lang_code == 'th' %}เข้าสู่ระบบ
+      {% else %}Sign In
+      {% endif %}
+    </button>
+
+    <div style="margin-top: 15px;">
+        <a href="{% url 'password_reset' %}?lang={{ lang_code }}" style="font-size: 0.85rem; color: #0066c0; text-decoration: underline;">
+            {% if lang_code == 'ja' %}パスワードをお忘れですか？
+            {% elif lang_code == 'zh-hant' or lang_code == 'zh-cn' %}忘記密碼？
+            {% elif lang_code == 'ko' %}비밀번호를 잊으셨나요?
+            {% elif lang_code == 'de' %}Passwort vergessen?
+            {% elif lang_code == 'fr' %}Mot de passe oublié ?
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}¿Olvidaste tu contraseña?
+            {% elif lang_code == 'it' %}Password dimenticata?
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Esqueceu sua senha?
+            {% elif lang_code == 'vi' %}Quên mật khẩu?
+            {% elif lang_code == 'th' %}ลืมรหัสผ่านใช่ไหม?
+            {% else %}Forgot your password?{% endif %}
+        </a>
+    </div>
+    
+
+  </form>
+
+  
+  <div class="legal-consent" style="margin-top: 15px; font-size: 0.75em; color: #555; line-height: 1.4;">
+    {% if lang_code == 'ja' %}
+        ログインすることにより、Thank Japanの<a href="{% url 'riyoukiyakuja' %}">利用規約</a>および<a href="{% url 'privacy_policyja' %}">プライバシー規約</a>に同意したものとみなされます。
+    {% elif lang_code == 'zh-hant' %}
+        登入即表示您同意 Thank Japan 的<a href="{% url 'riyoukiyakuzhHANT' %}">使用條件</a>和<a href="{% url 'privacy_policyzhHANT' %}">隱私聲明</a>。
+    {% elif lang_code == 'zh-cn' %}
+        登录即表示您同意 Thank Japan 的<a href="{% url 'riyoukiyakuzhCN' %}">使用条件</a>和<a href="{% url 'privacy_policyzhCN' %}">隐私声明</a>。
+    {% elif lang_code == 'ko' %}
+        로그인함으로써 귀하는 Thank Japan의 <a href="{% url 'riyoukiyakuko' %}">이용 약관</a> 및 <a href="{% url 'privacy_policyko' %}">개인정보 처리방침</a>에 동의하게 됩니다.
+    {% elif lang_code == 'de' %}
+        Durch die Anmeldung stimmen Sie den <a href="{% url 'riyoukiyakude' %}">Nutzungsbedingungen</a> und der <a href="{% url 'privacy_policyde' %}">Datenschutzerklärung</a> von Thank Japan zu.
+    {% elif lang_code == 'fr' %}
+        En vous connectant, vous acceptez les <a href="{% url 'riyoukiyakufr' %}">Conditions d'utilisation</a> et la <a href="{% url 'privacy_policyfr' %}">Politique de confidentialité</a> de Thank Japan.
+    {% elif lang_code == 'es-es' %}
+        Al iniciar sesión, aceptas las <a href="{% url 'riyoukiyakuesES' %}">Condiciones de Uso</a> y el <a href="{% url 'privacy_policyesES' %}">Aviso de Privacidad</a> de Thank Japan.
+    {% elif lang_code == 'es-mx' %}
+        Al iniciar sesión, aceptas las <a href="{% url 'riyoukiyakuesMX' %}">Condiciones de Uso</a> y el <a href="{% url 'privacy_policyesMX' %}">Aviso de Privacidad</a> de Thank Japan.
+    {% elif lang_code == 'it' %}
+        Effettuando l'accesso, accetti le <a href="{% url 'riyoukiyakuit' %}">Condizioni d'uso</a> e l' <a href="{% url 'privacy_policyit' %}">Informativa sulla privacy</a> di Thank Japan.
+    {% elif lang_code == 'pt' %}
+        Ao fazer login, você concorda com as <a href="{% url 'riyoukiyakupt' %}">Condições de Uso</a> e a <a href="{% url 'privacy_policypt' %}">Notificação de Privacidade</a> do Thank Japan.
+    {% elif lang_code == 'pt-br' %}
+        Ao fazer login, você concorda com as <a href="{% url 'riyoukiyakuptBR' %}">Condições de Uso</a> e a <a href="{% url 'privacy_policyptBR' %}">Notificação de Privacidade</a> do Thank Japan.
+    {% elif lang_code == 'vi' %}
+        Bằng cách đăng nhập, bạn đồng ý với <a href="{% url 'riyoukiyakuvi' %}">Điều khoản sử dụng</a> và <a href="{% url 'privacy_policyvi' %}">Chính sách bảo mật</a> của Thank Japan.
+    {% elif lang_code == 'th' %}
+        การเข้าสู่ระบบแสดงว่าคุณยอมรับ<a href="{% url 'riyoukiyakuth' %}">เงื่อนไขการใช้งาน</a>และ<a href="{% url 'privacy_policyth' %}">ประกาศความเป็นส่วนตัว</a>ของ Thank Japan
+    {% elif lang_code == 'en-in' %}
+        By signing in, you agree to Thank Japan's <a href="{% url 'riyoukiyakuenIN' %}">Conditions of Use</a> and <a href="{% url 'privacy_policyenIN' %}">Privacy Notice</a>.
+    {% else %}
+        By signing in, you agree to Thank Japan's <a href="{% url 'riyoukiyaku' %}">Conditions of Use</a> and <a href="{% url 'privacy_policy' %}">Privacy Notice</a>.
+    {% endif %}
+  </div>
+
+  <div style="background: #fff9e6; padding: 20px; border-radius: 8px; border: 1px solid #fce8b2; text-align: center; margin-top: 30px; color: #111;">
+    <p style="margin-bottom: 5px; font-weight: bold; font-size: 0.95em;">
+        {% if lang_code == 'ja' %}Thank Japanは初めてですか？
+        {% elif lang_code == 'zh-hant' %}第一次使用 Thank Japan 嗎？
+        {% elif lang_code == 'zh-cn' %}第一次使用 Thank Japan 吗？
+        {% elif lang_code == 'ko' %}Thank Japan이 처음이신가요?
+        {% elif lang_code == 'de' %}Neu bei Thank Japan?
+        {% elif lang_code == 'fr' %}Nouveau sur Thank Japan ?
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}¿Eres nuevo en Thank Japan?
+        {% elif lang_code == 'it' %}Nuovo su Thank Japan?
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Novo no Thank Japan?
+        {% elif lang_code == 'vi' %}Bạn mới sử dụng Thank Japan?
+        {% elif lang_code == 'th' %}เพิ่งเคยใช้ Thank Japan ใช่ไหม?
+        {% else %}New to Thank Japan?{% endif %}
+    </p>
+    <p style="margin-bottom: 15px; font-size: 0.85em; color: #555;">
+        {% if lang_code == 'ja' %}アカウントを作成して、スコアを保存しよう！
+        {% elif lang_code == 'zh-hant' or lang_code == 'zh-cn' %}建立帳號並儲存您的分數！
+        {% elif lang_code == 'ko' %}계정을 만들고 점수를 저장하세요!
+        {% elif lang_code == 'de' %}Erstelle ein Konto, um deine Punkte zu speichern!
+        {% elif lang_code == 'fr' %}Créez un compte pour enregistrer vos scores !
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}¡Crea una cuenta para guardar tus puntos!
+        {% elif lang_code == 'it' %}Crea un account per salvare i tuoi punteggi!
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Crie uma conta para salvar seus recordes!
+        {% elif lang_code == 'vi' %}Tạo tài khoản để lưu điểm của bạn!
+        {% elif lang_code == 'th' %}สร้างบัญชีเพื่อบันทึกคะแนนของคุณ!
+        {% else %}Create an account to save your scores!{% endif %}
+    </p>
+    
+    <a href="{% if lang_code == 'ja' %}{% url 'player_register' %}?lang=ja{% elif lang_code == 'zh-hant' %}{% url 'player_register' %}?lang=zh-hant{% elif lang_code == 'zh-cn' %}{% url 'player_register' %}?lang=zh-cn{% elif lang_code == 'ko' %}{% url 'player_register' %}?lang=ko{% elif lang_code == 'de' %}{% url 'player_register' %}?lang=de{% elif lang_code == 'fr' %}{% url 'player_register' %}?lang=fr{% elif lang_code == 'es-es' %}{% url 'player_register' %}?lang=es-es{% elif lang_code == 'es-mx' %}{% url 'player_register' %}?lang=es-mx{% elif lang_code == 'it' %}{% url 'player_register' %}?lang=it{% elif lang_code == 'pt' %}{% url 'player_register' %}?lang=pt{% elif lang_code == 'pt-br' %}{% url 'player_register' %}?lang=pt-br{% elif lang_code == 'vi' %}{% url 'player_register' %}?lang=vi{% elif lang_code == 'th' %}{% url 'player_register' %}?lang=th{% elif lang_code == 'en-in' %}{% url 'player_register' %}?lang=en-in{% else %}{% url 'player_register' %}{% endif %}" 
+       style="display: block; padding: 10px; background: #e7e9ec; border: 1px solid #adb1b8; border-radius: 3px; color: #111; text-decoration: none; font-size: 0.9em; font-weight: bold; box-shadow: 0 1px 0 rgba(255,255,255,.4) inset;">
+        {% if lang_code == 'ja' %}無料で新規登録
+        {% elif lang_code == 'zh-hant' %}免費註冊
+        {% elif lang_code == 'zh-cn' %}免费注册
+        {% elif lang_code == 'ko' %}무료 회원가입
+        {% elif lang_code == 'de' %}Kostenlos registrieren
+        {% elif lang_code == 'fr' %}S'inscrire gratuitement
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Regístrate gratis
+        {% elif lang_code == 'it' %}Registrati gratis
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Cadastre-se grátis
+        {% elif lang_code == 'vi' %}Đăng ký miễn phí
+        {% elif lang_code == 'th' %}ลงทะเบียนฟรี
+        {% else %}Sign Up for Free{% endif %}
+    </a>
+  </div>
+
+  <div style="text-align:center; margin:50px 0;">
+    <a class="btn-more" href="javascript:void(0);" onclick="goToTopPage()">
+        {% if lang_code == 'ja' %}← ホームに戻る
+        {% elif lang_code == 'zh-hant' %}← 返回首頁
+        {% elif lang_code == 'zh-cn' %}← 返回首页
+        {% elif lang_code == 'ko' %}← 홈으로 돌아가기
+        {% elif lang_code == 'de' %}← Zurück zur Startseite
+        {% elif lang_code == 'fr' %}← Retour à l'accueil
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}← Volver al inicio
+        {% elif lang_code == 'it' %}← Torna alla home
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}← Voltar para o início
+        {% elif lang_code == 'vi' %}← Quay lại trang chủ
+        {% elif lang_code == 'th' %}← กลับหน้าหลัก
+        {% else %}← Back to Home{% endif %}
+    </a>
+  </div>
+
+
+  <!-- 折りたたみボタン -->
+
+  <p style="text-align:center; font-size:1rem; color:#333; font-weight:600; margin-top:30px; letter-spacing: 0.5px;">
+    {% if lang_code == 'ja' %}
+      👇 ゲームを極めてランクアップしよう！
+    {% elif lang_code == 'zh-hant' %}
+      👇 精通遊戲，提升你的排名！
+    {% elif lang_code == 'zh-cn' %}
+      👇 精通游戏，提升你的排名！
+    {% elif lang_code == 'de' %}
+      👇 Meistere das Spiel und steigere deinen Rang!
+    {% elif lang_code == 'fr' %}
+      👇 Maîtrisez le jeu et améliorez votre rang !
+    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+      👇 Domina el juego y sube de rango
+    {% elif lang_code == 'it' %}
+      👇 Padroneggia il gioco e sali di livello!
+    {% elif lang_code == 'ko' %}
+      👇 게임을 마스터하고 랭크를 올려보세요!
+    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+      👇 Domine o jogo e suba de ranking!
+    {% elif lang_code == 'vi' %}
+      👇 Làm chủ trò chơi và tăng thứ hạng của bạn!
+    {% elif lang_code == 'th' %}
+      👇 เชี่ยวชาญเกมและไต่อันดับของคุณ!
+    {% else %}
+      👇 Master the Game & Rise Your Rank!
+    {% endif %}
+
+  </p>
+
+  <button id="toggle-instruction" style="
+      display:block;
+      margin:15px auto 10px;
+      padding:12px 28px;
+      font-size:1.05rem;
+      font-weight:700;
+      border: 2px solid #d4af37;
+      border-radius:12px;
+      background:#1a1a1a;
+      color:#d4af37;
+      cursor:pointer;
+      transition:0.3s;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    " onmouseover="this.style.background='#d4af37'; this.style.color='#1a1a1a';" onmouseout="this.style.background='#1a1a1a'; this.style.color='#d4af37';">
+    {% if lang_code == 'ja' %}
+      遊び方 ⚔️
+    {% elif lang_code == 'zh-hant' %}
+      遊戲玩法 ⚔️
+    {% elif lang_code == 'zh-cn' %}
+      游戏玩法 ⚔️
+    {% elif lang_code == 'de' %}
+      Spielanleitung ⚔️
+    {% elif lang_code == 'fr' %}
+      Comment jouer ⚔️
+    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+      Cómo jugar ⚔️
+    {% elif lang_code == 'it' %}
+      Come giocare ⚔️
+    {% elif lang_code == 'ko' %}
+      플레이 방법 ⚔️
+    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+      Como jogar ⚔️
+    {% elif lang_code == 'vi' %}
+      Cách chơi ⚔️
+    {% elif lang_code == 'th' %}
+      วิธีเล่น ⚔️
+    {% else %}
+      How to Play ⚔️
+    {% endif %}
+
+  </button>
+
+
+  <!-- 折りたたみコンテンツ -->
+  <div id="game-instruction" style="display:none; transition: all 0.3s ease;">
+    <div class="game-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:15px; margin-top:20px; padding:0 10px;">
+      
+      <div class="game-card" style="background:#ffffff; border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,0.15); overflow:hidden; text-align:center; transition:transform 0.2s; border: 2px solid #d4af37; font-family: 'Noto Sans JP', sans-serif;">
+        
+      
+        <div style="background: #1a1a1a; color: #d4af37; padding: 10px 5px; font-weight: bold; font-size: 1.1rem; border-bottom: 2px solid #d4af37;">
+            {% if lang_code == 'ja' %}
+              🏆 ランクシステム
+            {% elif lang_code == 'zh-hant' %}
+              🏆 等級系統
+            {% elif lang_code == 'zh-cn' %}
+              🏆 等级系统
+            {% elif lang_code == 'de' %}
+              🏆 Rangsystem
+            {% elif lang_code == 'fr' %}
+              🏆 Système de classement
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+              🏆 Sistema de rangos
+            {% elif lang_code == 'it' %}
+              🏆 Sistema di livelli
+            {% elif lang_code == 'ko' %}
+              🏆 랭크 시스템
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+              🏆 Sistema de ranking
+            {% elif lang_code == 'vi' %}
+              🏆 Hệ thống xếp hạng
+            {% elif lang_code == 'th' %}
+              🏆 ระบบอันดับ
+            {% else %}
+              🏆 Rank System
+            {% endif %}
+
+        </div>
+
+        <div style="padding: 10px 8px; font-size: 0.8rem; text-align: left; background: #ffffff;">
+            
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:4px 5px; align-items:center;">
+                <span style="color:#333;">🗾 <strong style="font-size:0.9rem;">伝説</strong> <small style="color:#999;">Legend</small></span>
+                <span style="color:#d46a00; font-weight:bold;">2000~</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:4px 5px; align-items:center;">
+                <span style="color:#333;">👑 <strong style="font-size:0.9rem;">大将軍</strong> <small style="color:#999;">General</small></span>
+                <span style="color:#d46a00; font-weight:bold;">1200~</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:4px 5px; align-items:center;">
+                <span style="color:#333;">🐎 <strong style="font-size:0.9rem;">将軍</strong> <small style="color:#999;">Shogun</small></span>
+                <span style="color:#d46a00; font-weight:bold;">900~</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:4px 5px; align-items:center;">
+                <span style="color:#333;">🏯 <strong style="font-size:0.9rem;">大名</strong> <small style="color:#999;">Daimyo</small></span>
+                <span style="color:#d46a00; font-weight:bold;">650~</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:4px 5px; align-items:center;">
+                <span style="color:#333;">🚩 <strong style="font-size:0.9rem;">旗本</strong> <small style="color:#999;">Hatamoto</small></span>
+                <span style="color:#d46a00; font-weight:bold;">450~</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:4px 5px; align-items:center;">
+                <span style="color:#333;">⚔️ <strong style="font-size:0.9rem;">侍</strong> <small style="color:#999;">Samurai</small></span>
+                <span style="color:#d46a00; font-weight:bold;">300~</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:4px 5px; align-items:center;">
+                <span style="color:#333;">🥷 <strong style="font-size:0.9rem;">忍者</strong> <small style="color:#999;">Ninja</small></span>
+                <span style="color:#d46a00; font-weight:bold;">200~</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:4px 5px; align-items:center;">
+                <span style="color:#333;">🚣 <strong style="font-size:0.9rem;">浪人</strong> <small style="color:#999;">Ronin</small></span>
+                <span style="color:#d46a00; font-weight:bold;">100~</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:4px 5px; align-items:center;">
+                <span style="color:#333;">🎒 <strong style="font-size:0.9rem;">旅人</strong> <small style="color:#999;">Traveler</small></span>
+                <span style="color:#d46a00; font-weight:bold;">50~</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:4px 5px; align-items:center;">
+                <span style="color:#333;">🌾 <strong style="font-size:0.9rem;">村人</strong> <small style="color:#999;">Villager</small></span>
+                <span style="color:#d46a00; font-weight:bold;">0~</span>
+            </div>
+
+        </div>
+
+        <div style="padding:8px 5px; font-size:0.8rem; color:#d46a00; font-weight:bold; background:#fff7e6; border-top:1px solid #f0f0f0;">
+            {% if lang_code == 'ja' %}
+              🎁 デイリーログイン：+1ポイント
+            {% elif lang_code == 'zh-hant' %}
+              🎁 每日登入：+1 分
+            {% elif lang_code == 'zh-cn' %}
+              🎁 每日登录：+1 分
+            {% elif lang_code == 'de' %}
+              🎁 Täglicher Login: +1 Punkt
+            {% elif lang_code == 'fr' %}
+              🎁 Connexion quotidienne : +1 point
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+              🎁 Inicio de sesión diario: +1 punto
+            {% elif lang_code == 'it' %}
+              🎁 Accesso giornaliero: +1 punto
+            {% elif lang_code == 'ko' %}
+              🎁 일일 로그인: +1 포인트
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+              🎁 Login diário: +1 ponto
+            {% elif lang_code == 'vi' %}
+              🎁 Đăng nhập hằng ngày: +1 điểm
+            {% elif lang_code == 'th' %}
+              🎁 ล็อกอินรายวัน: +1 คะแนน
+            {% else %}
+              🎁 Daily Login: +1 pt
+            {% endif %}
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+    function goToTopPage() {
+        
+        const topUrl = localStorage.getItem('tj_top_url');
+        if (topUrl) {
+            window.location.href = topUrl;
+        } else {
+            window.location.href = "{% url 'toppage' %}";
+        }
+    }
+
+document.addEventListener("DOMContentLoaded", function(){
+  const toggleBtn = document.getElementById("toggle-instruction");
+  const content = document.getElementById("game-instruction");
+
+  toggleBtn.addEventListener("click", function(){
+    if(content.style.display === "none" || content.style.display === ""){
+      content.style.display = "grid";
+      toggleBtn.textContent = "Close Guide ❌";
+    } else {
+      content.style.display = "none";
+      toggleBtn.textContent = "How to Play ⚔️";
+    }
+  });
+});
+
+</script>
+
+{% endblock %}

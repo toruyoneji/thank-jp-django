@@ -7,24 +7,43 @@ import paypalrestsdk
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables
+GA_TRACKING_ID = os.environ.get('GA_TRACKING_ID', '')
+
+
 SECRET_KEY = os.environ.get('SECRET_KEY')
+
+
 DEBUG = False
+
 ALLOWED_HOSTS = [
     'www.thankjapan.com',
     'thankjapan.com',
-    'thankjapan-4c187061757b.herokuapp.com'
+    'thankjapan-4c187061757b.herokuapp.com',
+    
 ]
 
-# Database
+
+
+RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY', '')
+RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY', '')
+
+RECAPTCHA_LANGUAGE = ''
+
+SILENCED_SYSTEM_CHECKS = ['django_recaptcha.recaptcha_test_key_error']
+
 DATABASES = {
-    'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+     'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
 }
 
-# PayPal
+
+
+
 PAYPAL_MODE = os.getenv('PAYPAL_MODE', 'live')
 PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID')
+PAYPAL_PLAN_ID = os.getenv('PAYPAL_PLAN_ID')
 PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET')
+PAYPAL_WEBHOOK_ID = os.getenv('PAYPAL_WEBHOOK_ID')
+
 paypalrestsdk.configure({
     "mode": PAYPAL_MODE,
     "client_id": PAYPAL_CLIENT_ID,
@@ -34,18 +53,18 @@ paypalrestsdk.configure({
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 
-# もし static_jp フォルダが存在する場合のみ追加
+
 STATICFILES_DIRS = []
 if (BASE_DIR / 'static_jp').exists():
     STATICFILES_DIRS.append(BASE_DIR / 'static_jp')
 
-# Herokuで collectstatic が通るように必ず STATIC_ROOT を設定
+
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# WhiteNoiseで静的ファイルを配信
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files (Cloudinary)
+
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
@@ -53,7 +72,7 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
 
-# Installed apps
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -64,8 +83,13 @@ INSTALLED_APPS = [
     'thank_japan_app.apps.ThankJapanAppConfig',
     'cloudinary',
     'cloudinary_storage',
-    'payment',
     'corsheaders',
+    'django_recaptcha',
+    'django.contrib.sites', 
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google', 
 ]
 
 MIDDLEWARE = [
@@ -75,6 +99,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'thank_japan_app.middleware.RedirectToWwwMiddleware',
@@ -92,6 +117,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'thank_japan_app.context_processors.google_analytics',
+                'thank_japan_app.context_processors.language_context',
             ],
         },
     },
@@ -139,3 +166,40 @@ SECURE_SSL_REDIRECT = True
 SECURE_HSTS_SECONDS = 3600
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
+
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SITE_ID = 1
+
+
+LOGIN_REDIRECT_URL = '/'
+
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+ACCOUNT_LOGIN_METHODS = {'email', 'username'}
+
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+
+#ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+#ACCOUNT_EMAIL_REQUIRED = True
+#ACCOUNT_USERNAME_REQUIRED = True 
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
+
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+
+
+SOCIALACCOUNT_ADAPTER = 'thank_japan_app.adapter.MySocialAccountAdapter'

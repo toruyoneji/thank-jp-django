@@ -1,0 +1,135 @@
+{% extends 'base/base_de.html' %}
+{% load static %}
+
+{% block title %}Firmeninformationen{% endblock %}
+
+{% block hreflang_tags %}
+    <link rel="alternate" hreflang="en" href="https://www.thankjapan.com/infomation/">
+    <link rel="alternate" hreflang="ja" href="https://www.thankjapan.com/infomation/ja/">
+    <link rel="alternate" hreflang="vi" href="https://www.thankjapan.com/infomation/vi/">
+    <link rel="alternate" hreflang="fr" href="https://www.thankjapan.com/infomation/fr/">
+    <link rel="alternate" hreflang="it" href="https://www.thankjapan.com/infomation/it/">
+    <link rel="alternate" hreflang="pt" href="https://www.thankjapan.com/infomation/pt/">
+    <link rel="alternate" hreflang="zh-hant" href="https://www.thankjapan.com/infomation/zh-hant/">
+    <link rel="alternate" hreflang="ko" href="https://www.thankjapan.com/infomation/ko/">
+    <link rel="alternate" hreflang="es-es" href="https://www.thankjapan.com/infomation/es-es/">
+    <link rel="alternate" hreflang="de" href="https://www.thankjapan.com/infomation/de/">
+    <link rel="alternate" hreflang="th" href="https://www.thankjapan.com/infomation/th/">
+    <link rel="alternate" hreflang="pt-br" href="https://www.thankjapan.com/infomation/pt-br/">
+    <link rel="alternate" hreflang="es-mx" href="https://www.thankjapan.com/infomation/es-mx/">
+    <link rel="alternate" hreflang="en-in" href="https://www.thankjapan.com/infomation/en-in/">
+    <link rel="alternate" hreflang="zh-cn" href="https://www.thankjapan.com/infomation/zh-cn/">
+    <link rel="alternate" hreflang="x-default" href="https://www.thankjapan.com/infomation/">
+
+{% endblock %}
+
+{% block content %}
+<style>
+  .main2 {
+    max-width: 800px;
+    margin: 40px auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #222;
+    background: #fff;
+    padding: 30px 40px;
+    border-radius: 14px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+
+  .main2 h1 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: #f27a54;
+    margin-bottom: 0.4em;
+    padding-top: 50px;
+    text-align: center;
+    text-shadow: 1px 1px 3px rgba(242, 122, 84, 0.5);
+  }
+
+  hr {
+    border: none;
+    border-top: 2px solid #f27a54;
+    margin: 1.8em 0;
+    opacity: 0.7;
+  }
+
+  h2 {
+    color: #f27a54;
+    font-weight: 700;
+    margin-top: 1.8em;
+    margin-bottom: 0.6em;
+    border-left: 6px solid #f27a54;
+    padding-left: 12px;
+    font-size: 1.6rem;
+  }
+
+  ul {
+    list-style-type: square;
+    padding-left: 20px;
+    color: #444;
+    font-size: 1.1rem;
+  }
+
+  ul li {
+    margin-bottom: 0.5em;
+  }
+
+  p {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: #555;
+  }
+
+  a.anchor {
+    color: #f27a54;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  a.anchor:hover {
+    color: yellowgreen;
+    text-decoration: underline;
+  }
+
+  /* Legal Notice h3 styling */
+  h2 a h3 {
+    display: inline-block;
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: inherit;
+  }
+</style>
+
+<div class="main2">
+    <h1>Firmeninformationen</h1>
+    <hr>
+
+    <h2>Firma</h2>
+    <ul>
+        <li><strong>Firmenname:</strong> ThankJapan</li>      
+        <li><strong>Firmenadresse:</strong> Kanazawa-shi, Ishikawa-ken, Japan</li>
+    </ul>
+    <hr>
+
+    <h2>Unternehmensvorstellung</h2>
+    <p>ThankJapan ist eine globale Plattform, die sich zum Ziel gesetzt hat, die Schönheit und den Geist Japans mit der Welt zu teilen. Unser einzigartiger Ansatz konzentriert sich nicht nur auf die traditionelle japanische Kultur, sondern auch darauf, wie universelle Konzepte in der japanischen Sprache ausgedrückt werden. Wir glauben, dass Sie durch das Verständnis dieser Zusammenhänge tiefere Einblicke in Japan gewinnen und so Ihre Sprachkenntnisse und Ihr interkulturelles Verständnis verbessern können.</p>
+    <p>Erkunden Sie mit uns alles von Alltagsgegenständen bis hin zur Geschäftsetikette. Wir bieten Premium-Lernerfahrungen für diejenigen, die professionelle Business-Fähigkeiten und praktische Einblicke in das Leben in Japan suchen. ThankJapan ist Ihr Leitfaden, um Japan durch eine globale Linse zu erleben.</p>
+    <hr>
+    <p>Wir verwenden Cookies, um sichere Zahlungen zu gewährleisten, Ihren Lernfortschritt zu speichern und Ihr Erlebnis zu verbessern. Durch das Fortfahren auf dieser Website stimmen Sie der Verwendung von Cookies zu.</p>
+    <hr>
+
+    <h2><a class="anchor" href="{% url 'riyoukiyakude' %}">Nutzungsbedingungen</a></h2>
+    <hr>
+
+    <h2><a class="anchor" href="{% url 'legal_noticede' %}">Rechtliche Hinweise</a></h2>
+    <hr>
+
+    <h2><a class="anchor" href="{% url 'privacy_policyde' %}">Datenschutzbestimmungen</a></h2>
+    <hr>
+
+    <h2><a class="anchor" href="{% url 'contact' %}">Kontakt</a></h2>
+</div>
+
+{% endblock %}

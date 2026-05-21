@@ -1,111 +1,658 @@
 {% load static %}
-<div class="main">
+
+<style>
+:root {
+    --sand-bg: #f3f4f6;
+    --stone-gray: #7a7a7a;
+    --stone-dark: #4a4a4a;
+    --moss-green: #556b2f;
+    --moss-light: #8f9779;
+    --text-main: #333333;
+    --accent-red: #a63737;
+    --wood-dark: #4a3b2a;
+}
+
+body {
+  margin: 0;
+  font-family: 'Zen Antique', 'Shippori Mincho', 'Noto Serif JP', serif;
+  background-color: var(--sand-bg);
+  background-image: 
+    repeating-radial-gradient(
+      circle at 50% 30%, 
+      transparent 0, 
+      transparent 10px, 
+      rgba(0,0,0,0.03) 11px, 
+      rgba(0,0,0,0.03) 12px
+    );
+  
+  color: var(--text-main);
+  text-align: center;
+}
+
+.main {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0; 
+}
+
+h2, h3 {
+  color: var(--stone-dark);
+  text-shadow: none;
+  font-weight: 700;
+  border-bottom: 1px solid var(--moss-green); 
+  display: inline-block;
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+  letter-spacing: 3px;
+}
+
+.hero {
+  position: relative; 
+  overflow: hidden;
+  margin-top: 0 !important;
+  height: 750px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  text-align: center;
+  padding: 0 20px;
+  background: none !important; 
+  mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+}
+
+
+.hero-bg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1; 
+  background-size: cover;
+  background-position: center 30%;
+  transition: opacity 3s ease-in-out; 
+}
+
+
+.hero-bg-layer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.3));
+}
+
+.hero h1 {
+  font-size: 3.5rem;
+  letter-spacing: 8px;
+  margin-bottom: 15px;
+  color: #fff;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+  font-family: 'Zen Antique', serif;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  margin-bottom: 40px;
+  font-family: 'Poppins', sans-serif;
+  color: #fff;
+  background: rgba(0,0,0,0.5);
+  padding: 10px 30px;
+  border-radius: 50px;
+  border: 1px solid rgba(255,255,255,0.5);
+  text-shadow: none;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  letter-spacing: 8px;
+  margin-bottom: 50px;
+  color: #fff;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+  font-family: 'Zen Antique', serif;
+}
+
+
+.hero-description-list {
+  background: rgba(0,0,0,0.5); 
+  padding: 20px 40px;
+  border-radius: 30px; 
+  border: 1px solid rgba(255,255,255,0.5); 
+  margin-bottom: 40px;
+  display: inline-block;
+  max-width: 90%;
+}
+
+.hero-description-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.hero-description-list li {
+  font-size: 1.1rem;
+  font-family: 'Poppins', sans-serif;
+  color: #fff;
+  line-height: 1.8;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+.explore-btn {
+    display: inline-block;
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+    min-width: 200px;
+    text-align: center;
+}
+
+.btn-gold {
+    background: linear-gradient(135deg, #fff1b8, #ffd700, #d4af37);
+    color: #000;
+    box-shadow: 0 6px 18px rgba(212, 175, 55, 0.6);
+    border: 1px solid #ffeb99;
+}
+
+
+.btn-red {
+
+    background: linear-gradient(135deg, #7ecafb 0%, #4da7db 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid #3c8dbc !important;
+    box-shadow: 0 4px 15px rgba(77, 167, 219, 0.4);
+    border-radius: 50px;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); 
+    transition: all 0.3s ease;
+}
+
+
+.btn-red:hover {
+    background: linear-gradient(135deg, #a0d8ff 0%, #7ecafb 100%) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(77, 167, 219, 0.6);
+    color: #ffffff !important;
+}
+
+.btn-red:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 10px rgba(77, 167, 219, 0.3);
+}
+
+
+.btn-yellow {
+    background: linear-gradient(to bottom, #f18e04, #ff8c00); 
+    color: #fff; 
+    border: 1px solid #e67e22;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2); 
+    box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3); 
+}
+
+.btn-yellow:hover {
+    background: linear-gradient(to bottom, #ffcc80, #f39c12); 
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 140, 0, 0.5);
+    color: #fff;
+}
+
+.login-prompt {
+    margin-top: 30px;
+    font-size: 1rem;
+    color: #ccc;
+}
+
+.login-prompt a {
+    color: #f0c14b; 
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.btn-white {
+    background: #ffffff !important;
+    color: #4a4a4a !important;
+    border: 2px solid #4a4a4a;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.btn-accent {
+    background: #556b2f !important;
+    color: #fff !important;
+    box-shadow: 0 6px 18px rgba(85, 107, 47, 0.4);
+}
+
+.explore-btn:hover {
+    transform: translateY(-3px);
+    filter: brightness(1.1);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+
+
+.explore-btn {
+  background:
+    linear-gradient(135deg,
+      #fff1b8 0%,
+      #ffd700 25%,
+      #e6b800 45%,
+      #ffec9e 60%,
+      #d4af37 80%,
+      #fff1b8 100%
+    );
+  color: #000;
+  padding: 18px 80px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1.3rem;
+  letter-spacing: 2px;
+  border: 1px solid #ffeb99;
+  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.6);
+  transition: all 0.4s ease;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.explore-btn:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.15);
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.7);
+}
+
+.game-call-to-action {
+  text-align: center;
+  margin: 60px auto;
+  max-width: 600px;
+  padding: 50px 30px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+}
+
+.play-game-button {
+  display: block;
+  width: 80%;
+  margin: 0 auto 20px auto;
+  padding: 20px 25px;
+  background: var(--moss-green);
+  color: #fff;
+  font-size: 1.4em;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 50px;
+  box-shadow: 0 5px 15px rgba(85, 107, 47, 0.3);
+  transition: all 0.3s ease;
+  letter-spacing: 0.1em;
+  font-family: 'Zen Antique', serif;
+}
+
+.play-game-button:hover {
+  background: var(--stone-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.game-description {
+  color: #666;
+  font-size: 0.95em;
+  margin-top: 15px;
+  line-height: 1.8;
+}
+
+.categories {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 20px 80px;
+}
+
+.category-grid {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 40px;
+}
+
+.category-card {
+  width: 280px;
+  text-align: center;
+  transition: transform 0.4s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.category-card img {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  border: 4px solid #fff;
+  transition: all 0.4s ease;
+}
+
+.category-card:hover img { 
+    transform: scale(1.05);
+    border-color: var(--moss-green);
+}
+
+.category-card h3 {
+  color: var(--text-main);
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  border: none;
+  margin-top: 10px;
+}
+
+.support {
+  background: var(--stone-dark);
+  padding: 100px 20px;
+  text-align: center;
+  color: #ddd;
+}
+
+.support h2 {
+  color: #fff;
+  border-bottom: 1px solid #666;
+  margin-bottom: 20px;
+}
+
+.support a {
+  background: transparent;
+  color: #fff;
+  text-decoration: none;
+  padding: 12px 40px;
+  border-radius: 50px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 1px solid #fff;
+  margin-top: 30px;
+  display: inline-block;
+}
+
+.support a:hover {
+  background: #fff;
+  color: var(--text-main);
+}
+
+
+footer {
+  background: #1f1f1f;
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 0.85rem;
+  color: #777;
+}
+
+.footer-links a {
+  color: #777;
+  text-decoration: none;
+  margin: 0 10px;
+}
+
+.hero-description {
+    margin-bottom: 20px;
+    color: #ffffff; 
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.6); 
+}
+
+.main-tagline {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.sub-tagline {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.level-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+
+@media screen and (max-width: 768px) {
+  .main { margin: 0 auto; }
+  .hero {
+    height: auto !important;
+    min-height: 750px !important;
+    padding: 100px 20px 60px !important; 
+    justify-content: flex-start !important;
+  }
+
+  .hero-title {
+    font-size: 2.2rem;
+    letter-spacing: 4px;
+    margin-top: 35px;
+  }
+  .hero-description-list {
+    padding: 15px 25px;
+  }
+  .hero-description-list li {
+    font-size: 0.95rem;
+  }
+
+
+
+  .hero-buttons {
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+  }
+
+  .hero h1 { font-size: 2.0rem; letter-spacing: 3px; }
+  .hero p { font-size: 1.0rem; width: 90%; }
+  .explore-btn { padding: 18px 40px; font-size: 1.1rem; width: 85%; margin-top: 10px; }
+  .category-grid { flex-direction: column; align-items: center; }
+  .footer-links { display: flex; flex-direction: column; gap: 15px; }
+  
+}
+
+@media screen and (max-width: 500px) {
+  body { 
+        padding-top: 140px !important;
+    }
+
+    .hero {
+    min-height: 650px !important;
+    padding-top: 80px !important;
+  }
+  .hero-title {
+    font-size: 2.4rem !important; 
+    letter-spacing: 3px !important; 
+    line-height: 1.2 !important;
+    margin-top: 20px !important;
+    margin-bottom: 30px !important;
+  }
+  .hero-description-list {
+    width: 95%;
+    padding: 15px 15px;
+    margin-bottom: 35px;
+  }
+
+  .hero h1 { font-size: 0.9rem; }
+}
+</style>
+
+  
+
+
+<section class="hero" id="hero-slider">
+
+  <div class="hero-bg-layer" id="bg-1" style="background-image: url('https://res.cloudinary.com/dotekofm5/image/upload/v1768385674/thankjapan/backgrounds/gx8xbypllgs1qogcsvak.jpg'); opacity: 1;"></div>
+  <div class="hero-bg-layer" id="bg-2" style="background-image: url('https://res.cloudinary.com/dotekofm5/image/upload/v1778602671/thankjapan/backgrounds/ljw4gmp1ejmlh7qxnfcl.jpg'); opacity: 0;"></div>
+  <div class="hero-bg-layer" id="bg-3" style="background-image: url('https://res.cloudinary.com/dotekofm5/image/upload/v1779246274/thankjapan/backgrounds/rwra8lolzbyp0kn6cs25.jpg'); opacity: 0;"></div>
+
+
+  {% if not user.is_authenticated %}
+    <div class="hero-container"> 
+      
+      <h1 class="hero-title">THANK JAPAN</h1>
+
+      <div class="hero-description-list">
+        <ul>
+          <li>🎮 Master Japanese Vocabulary through Fun Games!</li>
+          <li>🍱 Essential Food & Culture Terms in 15 Languages</li>
+          <li>🗾 Discover Hidden Gems & Local Expressions</li>
+          <li>🎓 Vocab Booster: All Levels from N5 to N1</li>
+        </ul>
+      </div>
+
+
+    <div class="hero-buttons">
+      
+       <a href="{% url 'category_list' %}" class="explore-btn btn-red">Master Japanese Vocab 📖</a>
+
+      <a href="{% url 'player_register' %}?lang=en" class="explore-btn btn-yellow">
+          Join for Free & Earn Points 
+      </a>
+    </div>
     
-    <p class="document">
-        <strong>Experience Japan — through its culture, language, and food.<br>
-        Made for curious minds and global learners.</strong></p>
-        <hr>
-        <p class="document">
-            <h2>Trending Categories</h2>
-            ↓↓
-            <h3><strong><a href="{% url 'foodpage' %}">Food</a></strong>  <strong><a href="{% url 'culturepage' %}">culture</a></strong>  
-            <strong><a href="{% url 'animalpage' %}">Animal</a></strong>  <strong><a href="{% url 'flowerpage' %}">Flower</a></strong>
-            <strong><a href="{% url 'cookpage'%}">Cook</a></strong></h3>
-        </p>
-        <hr>
-        <p class="document">Hello everyone, this is ThankJapan.
-        I'm sending this message from Japan.
-        Have you ever been to Japan?
-        Japan is a country surrounded by the sea.
-        This website is for studying Japanese language and culture.
-        Let’s study Japanese together!
-        I’m looking forward to the day I can meet you all.
-        Have a great day!<br>
-        Once you've learned a bit, try the <strong><a href="{% url 'game_start' %}">game</a></strong> to test your knowledge. Questions will appear randomly!
-        <hr>
-        </p>
+    <p class="login-prompt">
+      Already a member? <a href="{% url 'player_login' %}?next={{ request.get_full_path|urlencode }}&lang={{ lang_code }}">Login here</a>
+    </p>
+    
+    
+  {% elif not user.profile.is_premium %}
+    <h1>Welcome back, {{ user.username }}!</h1>
+    <div class="hero-buttons">
+      <a href="{% url 'category_list' %}" class="explore-btn btn-red">Start Learning 📖</a>
+    </div>
+    <div class="hero-buttons">
+      <a href="{% url 'account_settings' %}" class="explore-btn btn-white">Manage Account ⚙️</a>
+    </div>
+    
+  {% else %}
+    <h1>Welcome back, {{ user.username }}! <br>💎Premium Member💎</h1>
+    <div class="hero-buttons">
+      <a href="{% url 'category_list' %}" class="explore-btn btn-gold">Go to Lessons 📖</a>
+      <a href="{% url 'account_settings' %}" class="explore-btn btn-white">Manage Account ⚙️</a>
+    </div>
+  {% endif %}
+</section>
+
+
+  <div class="game-call-to-action">
+    <a href="{% url 'game_start' %}" class="play-game-button">
+        Japanese Vocab Quiz 
+        <span class="game-icon">🎮</span> 
+    </a>
+    <p class="game-description">
+        Challenge the global leaderboard with our 3 choice Japanese vocab quiz!<br>Master essential words through culture and games.
+    </p>
+  </div>
+
+  <section class="categories">
+    <h2>Discover Japan</h2>
+    <div class="category-grid">
+      <div class="category-card">
+        <a href="{% url 'japanfood' %}?lang=en">
+          <img src="https://res.cloudinary.com/dotekofm5/image/upload/v1761200066/thankjapan/backgrounds/adfqqgtdfozxi848gopz.png" alt="Japanese Cuisine">
+        </a>
+        <h3>Authentic Japanese Food and Everyday Meals</h3>
+      </div>
+
+
+      <div class="category-card">
+        <a href="{% url 'prefecture_list' %}?lang=en">
+          <img src="https://res.cloudinary.com/dotekofm5/image/upload/v1761842683/thankjapan/backgrounds/ixyersx9bdpxytxzetix.jpg" alt="Japanese Tradition">
+        </a>
+        <h3>Famous Places & Landmarks</h3>
+      </div>
+
+  </section>
+
+
+  <footer>
+    <div class="footer-links">
+      <a href="{% url 'infomationpage' %}">About Us</a>
+      <a href="{% url 'privacy_policy' %}">Privacy Policy</a>
+      <a href="{% url 'riyoukiyaku' %}">Terms of Use</a>
+      <a href="{% url 'contact' %}">Contact</a>
+    </div>
+    <small>© 2025 Thank Japan | Explore, enjoy, and fall in love with Japanese culture</small>
+  </footer>
+
+  <script>
+    localStorage.setItem('tj_top_url', window.location.href);
+  </script>
+
+{% if user.is_authenticated and user.profile.is_premium %}
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const duration = 2500;
+        const end = Date.now() + duration;
+
+        (function frame() {
+            confetti({
+                particleCount: 2,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0, y: 0.8 },
+                colors: ['#f1c40f', '#ffffff']
+            });
+            confetti({
+                particleCount: 2,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1, y: 0.8 },
+                colors: ['#f1c40f', '#ffffff']
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
+    });
+</script>
+{% endif %}
+
+    
+<script>
+    (function() {
         
-        <p class="document">
-        For company information, terms of use, privacy policy, and inquiries, please visit the <strong>Company</strong> tab.
-        To help maintain this site, we appreciate your support. Contributions will be used for company operations and 	site maintenance.
-        <br>You can make a donation via the <strong><a href="{% url 'select_amount' %}">Support</a></strong> tab by selecting an amount and completing the 	payment through <strong>PayPal (bank account, PayPal, or credit card)</strong>.<br>
-        <em>Please note that we do not offer refunds after the payment has been made.
-        </p>
-        <hr>
+        const layers = document.querySelectorAll('.hero-bg-layer');
+        let currentIndex = 0; 
 
-    <h2 class="h2">How to use this site:</h2>
-        <p class="document">
-        Please select your preferred genre from the categories on the left.
-        After selecting a genre, you will be taken to that genre’s page.
-        Click on any item that interests you, 
-        and its image, name, and description will be displayed as shown below.<br />
-        "By the way, the name will be written in Roman letters."
-        </p>
+        function rotateBackgrounds() {
+           
+            layers[currentIndex].style.opacity = "0";
+ 
+            currentIndex = (currentIndex + 1) % layers.length;
 
-        <p class="yajirushi">↓↓</p>
+            layers[currentIndex].style.opacity = "1";
+        }
         
-        <a href="{% url 'naturepage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645312/thankjapan/backgrounds/hutwikylfzofnnzrahgh.png" 
-        alt="fujisan" width="900" height="500"/></a>
-            <dl>
-                <dt class="dt">Mount Fuji(English Name)</dt>
-                <dt class="dt">Japanese Name: 富士山 ← Kanji or Hiragana or Katakana</dt>
-                <dt class="dt">Name: Fuzisan ← Romaji</dt>
-                <dd class="dd">description:<br />
-                "It stands at an elevation of 3,776 meters, making it the highest mountain in Japan. 
-                Straddling Shizuoka and Yamanashi prefectures, 
-                it is considered a symbol of Japan for its beautiful appearance."</dd>
-                <hr>
-                <dd class="dd">history:<br />
-                Mount Fuji is Japan’s highest and most iconic mountain, standing at 3,776 meters. 
-                It is a stratovolcano that last erupted in 1707-1708. 
-                Mount Fuji has been sacred in Japanese culture for centuries, inspiring Shinto and Buddhist practices, art, and literature. 
-                During the Edo period (17th-19th centuries), climbing Fuji became a popular pilgrimage. 
-                Today, Mount Fuji is a UNESCO World Heritage site, 
-                a symbol of Japan, and a major destination for climbers and tourists worldwide.
-                </dd>
-            </dl>
-            <br>
-        <hr />
-        <p class="dt">From here, I’ll show you some of the foods we eat at my house — just a few examples!</p>
-        <p class="yajirushi">↓↓</p>
-        <hr>
-        <p class="dt">This is tonkotsu ramen made from instant noodles.</p>
-        <a href="{% url 'cookpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645502/thankjapan/backgrounds/eerlcbkiwnesgz4g5yuw.png" 
-         alt="tonkotsuramen"/></a>
-
-        <p class="dt">This is the miso soup we make at home.</p>
-        <a href="{% url 'cookpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645480/thankjapan/backgrounds/efyejn2fmwas2ogvdip4.png"
-         alt="misoshiru"/></a>
-
-        <p class="dt">This is natto on rice.</p>
-        <a href="{% url 'cookpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645548/thankjapan/backgrounds/a6oisaruk463hbfywpl9.png"
-         alt="nattougohan"/></a>
-
-        <p class="dt">Every now and then, I have takikomi gohan, but it's pretty rare.</p>
-        <a href="{% url 'cookpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645533/thankjapan/backgrounds/gkyce0htgx1rrh9tbaun.png"
-         alt="takikomigohan"/></a>
-
-        <p class="dt">These are tri-colored dumplings made from deep-fried shrimp paste.</p>
-        <a href="{% url 'foodpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645575/thankjapan/backgrounds/ifqqmdqedadu4vg8ilgw.png"
-         alt="sanshokudango"/></a>
-
-        <p class="dt">This is Kashiwa Mochi, a traditional Japanese sweet eaten in May.</p>
-        <a href="{% url 'foodpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645592/thankjapan/backgrounds/ldhlg7gelekxhnvh8srr.png"
-         alt="kashiwamochi"/></a>
-
-        <p class="dt">This is grilled salmon.</p>
-        <a href="{% url 'foodpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645644/thankjapan/backgrounds/s7qflkaitfrusrsjkoxa.png"
-         alt="yakisake" /></a>
-
-        <p class="dt">Hiyashi Chuka is a type of cold ramen eaten in the summer.</p>
-        <a href="{% url 'cookpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645614/thankjapan/backgrounds/xod0qhqztcnflvwk5j2s.png"
-         alt="hiyashichuka" /></a>
-        <p class="dt">Katsuo no Tataki is one type of Japanese sashimi, featuring lightly seared skipjack tuna.</p>
-        <a href="{% url 'foodpage' %}"><img class="image" src="https://res.cloudinary.com/dotekofm5/image/upload/v1754645624/thankjapan/backgrounds/ul34siwlrmvimtmyiyx7.png"
-         alt="katsuonotataki" /></a>
-
-        
-
-        <p class="return">Clicking on <a class="anchor" href="{% url 'toppage' %}">
-            'Home'</a>or Thank_Japan will take you back to the top page (this page).</p>
-</div>
+        setInterval(rotateBackgrounds, 7000);
+    })();
+</script>

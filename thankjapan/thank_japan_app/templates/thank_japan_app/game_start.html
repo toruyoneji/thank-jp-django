@@ -1,64 +1,917 @@
-{% extends 'base.html' %}
+{% extends 'base/basecategory.html' %}
+{% load category_filters %}
+
 {% block title %}Start Game | ThankJapan{% endblock %}
 
 {% block content %}
-
 <style>
-.fancy-button {
-  background: linear-gradient(45deg, #ff6b6b, #f06595);
-  border: none;
-  border-radius: 30px;
-  color: white;
-  padding: 15px 40px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(240, 101, 149, 0.6);
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+:root {
+    --wall-color: #dccb96;
+    --tatami-color: #f9f7f0;
+    --tatami-border: #2f3e30;
+    --scroll-paper: #fcfaf2;
+    --scroll-cloth: #6d7058;
+    --bamboo: #9e8e6b;
+    --dark-wood: #4a3b2a;
+    --matcha: #7b942e;
+    --azuki: #925c57;
+    --charcoal: #2b2b2b;
+    --text-dark: #333;
 }
 
-.fancy-button:hover {
-  background: linear-gradient(45deg, #f06595, #ff6b6b);
-  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.8);
+body {
+    font-family: 'Zen Antique', 'Shippori Mincho', 'Noto Serif JP', serif;
+    background-color: var(--wall-color);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
+    color: var(--text-dark);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    overflow-y: auto;
 }
+
+body::before, body::after { display: none; }
+
+.container {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    width: 90%;
+    max-width: 600px;
+    margin-top: 30px;
+    margin-bottom: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.game-start-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 30px;
+    border-top: 10px solid var(--dark-wood);
+    border-left: 10px solid var(--dark-wood);
+    border-right: 10px solid var(--dark-wood);
+    background-color: rgba(0,0,0,0.05);
+    box-shadow: inset 0 10px 30px rgba(0,0,0,0.2);
+    border-radius: 4px 4px 0 0;
+}
+
+.start-game-title {
+    font-size: 2.0em;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+    letter-spacing: 3px;
+    text-shadow: none;
+    background-color: var(--scroll-paper);
+    padding: 30px 40px;
+    width: 60%;
+    text-align: center;
+    border-top: 40px solid var(--scroll-cloth);
+    border-bottom: 40px solid var(--scroll-cloth);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.start-game-title::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 300px;
+    background: rgba(0,0,0,0.1);
+    z-index: -1;
+}
+
+.difficulty-options {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin-top: 20px;
+    background: var(--dark-wood);
+    padding: 5px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+}
+
+.difficulty-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    text-decoration: none;
+    color: var(--text-dark);
+    min-height: 100px;
+    transition: all 0.1s ease;
+    
+    background-color: #fffdfa; 
+    background-image: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px, 
+        rgba(0,0,0,0.03) 4px
+    );
+    border: 4px solid var(--tatami-border);
+    position: relative;
+    -webkit-tap-highlight-color: transparent; 
+}
+
+.difficulty-card:hover,
+.difficulty-card:active,
+.difficulty-card:focus {
+    background-color: #d6e9ca;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    outline: none;
+}
+
+.difficulty-card:active {
+    transition: none !important;
+    background-color: #d6e9ca !important;
+}
+
+.difficulty-card .emoji {
+    font-size: 2em;
+    margin-bottom: 5px;
+    opacity: 0.8;
+}
+
+.difficulty-info h3 {
+    margin: 0;
+    font-size: 1.2em;
+    font-weight: 700;
+    text-align: center;
+}
+
+.difficulty-info p {
+    font-size: 0.8em;
+    color: #555;
+    margin-top: 2px;
+}
+
+.easy { border-color: var(--matcha); }
+.normal { border-color: var(--bamboo); }
+.hard { border-color: var(--azuki); }
+
+.super-hard {
+    border-color: var(--charcoal);
+    background-color: #e6e6e6;
+}
+.super-hard:hover {
+    background-color: #333;
+    color: #fff;
+    border-color: #000;
+}
+.super-hard:hover h3, 
+.super-hard:hover p {
+    color: #fff;
+}
+
+.difficulty-card.locked {
+    background-color: #dcdcdc;
+    border-color: #999;
+    color: #999;
+    cursor: not-allowed;
+    filter: grayscale(100%);
+    pointer-events: none;
+}
+.difficulty-card.locked h3 { font-family: 'Courier New', monospace; color: #777; }
+.difficulty-card.locked p { color: #777; font-weight: bold; }
+
+/* premium */
+.difficulty-card.sample-card {
+    background: linear-gradient(135deg, #f0fff4 0%, #dff6e3 100%) !important; 
+    border: 3px solid #27ae60 !important; 
+    position: relative;
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+}
+
+.sample-card h3 {
+    color: #1e5631 !important;
+}
+
+.sample-card p {
+    color: #2d7a43 !important;
+}
+
+
+.sample-card .free-badge {
+    background: #27ae60; 
+}
+
+
+.difficulty-card.premium-gold {
+    background: linear-gradient(135deg, #fffcf0 0%, #fff9e6 50%, #f7e48e 100%) !important;
+    border: 3px solid #d4af37 !important;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+}
+
+
+.difficulty-card.premium-locked {
+    background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%) !important;
+    border: 2px solid #9e9e9e !important;
+    filter: grayscale(0.8);
+    opacity: 0.85;
+    position: relative;
+    cursor: pointer;
+}
+
+
+.lock-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    z-index: 5;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+
+.free-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #27ae60;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: bold;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+
+.premium-gold h3 {
+    color: #4a3b2a !important;
+    font-weight: 800;
+}
+
+.premium-gold p {
+    color: #6d5b46 !important;
+    font-weight: 600;
+}
+
+
+.premium-locked:hover {
+    transform: none !important;
+    background: linear-gradient(135deg, #d4d4d4 0%, #b0b0b0 100%) !important;
+}
+
+
+.player-info {
+    width: 100%;
+    margin-top: 30px;
+    color: #555;
+    background: rgba(255,255,255,0.3);
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.logout-button {
+    background: transparent;
+    color: var(--dark-wood);
+    border: 1px solid var(--dark-wood);
+    padding: 8px 30px;
+    border-radius: 2px;
+    font-size: 0.9em;
+    box-shadow: none;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 10px;
+}
+.logout-button:hover {
+    background: var(--dark-wood);
+    color: #fff;
+    transform: none;
+}
+
+.guest-action-area {
+    margin-top: 20px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.register-btn-main {
+    background-color: #b7282e;
+    color: #fff;
+    text-decoration: none;
+    padding: 15px 30px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    box-shadow: 0 4px 15px rgba(183, 40, 46, 0.4);
+    border: 2px solid #fff;
+    transition: all 0.3s ease;
+    width: 80%;
+    max-width: 350px;
+}
+
+.register-btn-main:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(183, 40, 46, 0.6);
+    background-color: #d6353b;
+}
+
+.btn-icon { font-size: 1.8rem; }
+
+.btn-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-weight: bold;
+    font-size: 1.2rem;
+    line-height: 1.2;
+}
+
+.btn-text small {
+    font-size: 0.8rem;
+    font-weight: normal;
+    opacity: 0.9;
+    margin-top: 3px;
+}
+
+.login-link-sub {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.login-link-sub a {
+    color: var(--dark-wood);
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.visual-rule-container {
+    background: #fffdfa;
+    border-top: 10px solid #a65e4e;
+    border-bottom: 10px solid #a65e4e;
+    border-left: 1px solid #e0d5c0;
+    border-right: 1px solid #e0d5c0;
+    border-radius: 2px;
+    padding: 25px 20px;
+    margin-bottom: 30px;
+    color: #333;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.rule-step { 
+    color: #333; 
+    opacity: 1; 
+    font-weight: bold; 
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+}
+.step-arrow { color: var(--azuki); margin: 0 5px; }
+
+.rule-example-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    font-family: 'Courier New', monospace; 
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.example-item.correct {
+    background: #f1f8e9;
+    border: 1px solid var(--matcha);
+    color: #556b2f;
+    border-radius: 50px;
+    padding: 8px 15px;
+}
+
+.example-item.wrong {
+    background: #fff5f5;
+    border: 1px solid var(--azuki);
+    color: var(--azuki);
+    text-decoration: line-through;
+    border-radius: 4px;
+    padding: 8px 15px;
+    opacity: 0.8;
+}
+
+.example-mark { display: inline-block; margin-left: 5px; text-decoration: none; }
+.example-divider { font-size: 0.9rem; color: #888; font-style: italic; font-family: serif; }
+
+.rule-caption { 
+    color: #5d4037; 
+    font-size: 0.9em; 
+    margin-top: 15px;
+    line-height: 1.6;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+.rule-caption strong { color: #b7282e; font-weight: bold; }
+.rule-caption span[style] { color: #666 !important; }
+
+.btn-more {
+    display: inline-block;
+    background: #ffb347;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 20px;
+    transition: background 0.3s;
+}
+.btn-more:hover {
+    background: #ff9642;
+}
+
+
+@media (max-width: 768px) {
+    .container {
+        width: 95% !important;
+        padding-top: 90px !important;
+        margin-top: 0 !important;
+        padding-left: 0;
+        padding-right: 0;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .game-start-container {
+        padding: 15px;
+        border-width: 5px;
+    }
+
+    .start-game-title {
+        width: 80%;
+        font-size: 1.5em;
+        padding: 20px;
+        border-top-width: 20px;
+        border-bottom-width: 20px;
+    }
+
+    .difficulty-options {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .difficulty-card {
+        padding: 15px 5px;
+        min-height: 80px;
+    }
+    .difficulty-card.locked { min-height: 80px; }
+
+    .difficulty-card .emoji { font-size: 1.5em; }
+    
+    .register-btn-main { width: 90%; padding: 12px 20px; }
+    .btn-icon { font-size: 1.5rem; }
+    .btn-text { font-size: 1.1rem; }
+}
+
+@media (max-width: 400px) {
+    .container {        
+        padding-top: 150px !important;
+    }
+}
+
 </style>
 
 
-<div class="main2">
-  <h1>Enter Your Username to Start the Quiz</h1>
+<div class="container">
+    <div class="game-start-container">
+        <h2 class="start-game-title">
+            {% if lang_code == 'ja' %}日本語の単語や漢字、どれだけわかる？
+            {% elif lang_code == 'zh-hant' %}你認識多少日文單字和漢字？
+            {% elif lang_code == 'zh-cn' %}你认识多少日语单词和汉字？
+            {% elif lang_code == 'ko' %}일본어 단어와 한자를 얼마나 아시나요?
+            {% elif lang_code == 'fr' %}Combien de mots et de kanjis japonais connaissez-vous ?
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}¿Cuántas palabras y kanjis japoneses sabes?
+            {% elif lang_code == 'de' %}Wie viele japanische Wörter und Kanjis kennst du?
+            {% elif lang_code == 'it' %}Quante parole e kanji giapponesi conosci?
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Quantas palavras e kanjis em japonês você conhece?
+            {% elif lang_code == 'vi' %}Bạn biết bao nhiêu từ vựng và Kanji tiếng Nhật?
+            {% elif lang_code == 'th' %}คุณรู้จักคำศัพท์และคันจิภาษาญี่ปุ่นแค่ไหน?
+            {% else %}How many Japanese words and Kanji do you know?
+            {% endif %}
+        </h2>
 
-  <h2>Enter your username and country</h2>
+        <div class="visual-rule-container">
+            <div class="rule-step">
+                <span class="step-emoji">🖼️</span>
+                <span class="step-arrow">➡</span>
+                <span class="step-emoji">🇯🇵</span>
+                <span class="step-arrow">➡</span>
+                <span class="step-emoji">👆</span>
+            </div>
+    
+            <div class="rule-example-box">
+                <div class="example-item correct">
+                <span class="example-icon">🍣</span>
+                <span class="example-text">SUSHI</span>
+                <span class="example-mark">✅</span>
+            </div>
 
-  {% if messages %}
-      <ul class="messages" style="list-style: none; padding: 0;">
-          {% for message in messages %}
-              <li style="font-weight: bold; color: red;">
-                  {{ message }}
-              </li>
+            <div class="example-divider">vs</div>
+            <div class="example-item wrong">
+                <span class="example-icon">🍣</span>
+                <span class="example-text">
+                    {% if lang_code == 'ja' %}さかな
+                    {% elif lang_code == 'zh-hant' or lang_code == 'zh-cn' %}魚
+                    {% elif lang_code == 'de' %}Fisch
+                    {% elif lang_code == 'fr' %}Poisson
+                    {% elif lang_code == 'it' %}Pesce
+                    {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Pescado
+                    {% elif lang_code == 'ko' %}물고기
+                    {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Peixe
+                    {% elif lang_code == 'vi' %}Cá
+                    {% elif lang_code == 'th' %}ปลา
+                    {% else %}Fish{% endif %}
+                </span>
+                <span class="example-mark">❌</span>
+            </div>
+        </div>
 
-          {% endfor %}
-      </ul>
-  {% endif %}
+        <p class="rule-caption">
+        {% if lang_code == 'ja' %}
+            60秒以内に正しい日本語を選んでください！<br>
+            ・3つの選択肢から1つをタップ<br>
+            <span style="font-size: 0.9em; color: #00bcd4; font-weight: bold;">⏱ タイムアタック：何問解けるか挑戦！</span>
 
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
+        {% elif lang_code == 'zh-hant' %}
+            請在 60 秒内選擇正確的日文！<br>
+            ・從 3 個選項中點擊一個<br>
+            <span style="font-size: 0.9em; color: #00bcd4; font-weight: bold;">⏱ 限時挑戰：看看你能答對多少題！</span>
 
-    {% if form.errors %}
-    <ul style="color: red; margin-top: 10px;">
-      {% for field in form %}
-        {% for error in field.errors %}
-          <li>{{ error }}</li>
-        {% endfor %}
-      {% endfor %}
-      {% for error in form.non_field_errors %}
-        <li>{{ error }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    <button type="submit" class="fancy-button">Start Game</button>
-  </form>
+        {% elif lang_code == 'zh-cn' %}
+            请在 60 秒内选择正確的日文！<br>
+            ・从 3 个选项中点击一个<br>
+            <span style="font-size: 0.9em; color: #00bcd4; font-weight: bold;">⏱ 限时挑战：看看你能答对多少题！</span>
 
-</div>
+        {% elif lang_code == 'de' %}
+            Wähle den richtigen japanischen Namen innerhalb von 60 Sek.!<br>
+            - Tippe auf eine der 3 Optionen<br>
+            <span style="font-size: 0.9em; color: #00bcd4; font-weight: bold;">⏱ Time Attack: Wie viele schaffst du?</span>
 
+        {% elif lang_code == 'fr' %}
+            Choisis le bon nom japonais en moins de 60 secondes !<br>
+            - Appuie sur l'une des 3 options<br>
+            <span style="font-size: 0.9em; color: #00bcd4; font-weight: bold;">⏱ Time Attack : Combien peux-tu en résoudre ?</span>
+
+        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}
+            ¡Elige el nombre japonés correcto en menos de 60 segundos!<br>
+            - Toca una de las 3 opciones<br>
+            <span style="font-size: 0.9em; color: #00bcd4; font-weight: bold;">⏱ Contrarreloj: ¿Cuántas puedes resolver?</span>
+
+        {% elif lang_code == 'it' %}
+            Scegli il nome giapponese corretto entro 60 secondi!<br>
+            - Tocca una delle 3 opzioni<br>
+            <span style="font-size: 0.9em; color: #00bcd4; font-weight: bold;">⏱ Time Attack: Quante ne puoi indovinare?</span>
+
+        {% elif lang_code == 'ko' %}
+            60초 안에 올바른 일본어 이름을 선택하세요!<br>
+            ・3가지 선택지 중 하나를 터치<br>
+            <span style="font-size: 0.9em; color: #00bcd4; font-weight: bold;">⏱ 타임어택: 몇 문제나 맞힐 수 있을까요?</span>
+
+        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}
+            Escolha o nome japonês correto em até 60 segundos!<br>
+            - Toque em uma das 3 opções<br>
+            <span style="font-size: 0.9em; color: #00bcd4; font-weight: bold;">⏱ Time Attack: Quantas você consegue resolver?</span>
+
+        {% elif lang_code == 'vi' %}
+            Chọn tên tiếng Nhật đúng trong vòng 60 giây!<br>
+            - Chạm vào 1 trong 3 lựa chọn<br>
+            <span style="font-size: 0.9em; color: #00bcd4; font-weight: bold;">⏱ Thử thách thời gian: Bạn giải được bao nhiêu câu?</span>
+
+        {% elif lang_code == 'th' %}
+            เลือกชื่อภาษาญี่ปุ่นที่ถูกต้องภายใน 60 วินาที!<br>
+            - แตะหนึ่งใน 3 ตัวเลือก<br>
+            <span style="font-size: 0.9em; color: #00bcd4; font-weight: bold;">⏱ Time Attack: มาดูกันว่าคุณจะทำได้กี่ข้อ!</span>
+
+        {% else %}
+            Pick the correct Japanese name within 60 seconds!<br>
+            - Tap one of the 3 choices<br>
+            <span style="font-size: 0.9em; color: #00bcd4; font-weight: bold;">⏱ Time Attack: How many can you solve?</span>
+        {% endif %}
+        </p>
+    </div>
+
+        <div class="difficulty-options">
+            <a href="{% url 'game_restart' %}?difficulty=easy" class="difficulty-card easy">
+                <span class="emoji">🙂</span>
+                <div class="difficulty-info">
+                    <h3>EASY</h3>
+                    <p>
+                        {% if lang_code == 'ja' %}かんたんな単語
+                        {% elif lang_code == 'zh-hant' %}簡單單字
+                        {% elif lang_code == 'zh-cn' %}简单单字
+                        {% elif lang_code == 'ko' %}쉬운 단어
+                        {% elif lang_code == 'de' %}Einfache Wörter
+                        {% elif lang_code == 'fr' %}Mots simples
+                        {% elif lang_code == 'it' %}Parole semplici
+                        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Palabras simples
+                        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Palavras simples
+                        {% elif lang_code == 'vi' %}Từ đơn giản
+                        {% elif lang_code == 'th' %}คำง่ายๆ
+                        {% else %}Simple words{% endif %}
+                    </p>
+                </div>
+            </a>
+
+            <a href="{% url 'game_restart' %}?difficulty=normal" class="difficulty-card normal">
+                <span class="emoji">😐</span>
+                <div class="difficulty-info">
+                    <h3>NORMAL</h3>
+                    <p>
+                        {% if lang_code == 'ja' %}日常生活
+                        {% elif lang_code == 'zh-hant' or lang_code == 'zh-cn' %}日常生活
+                        {% elif lang_code == 'ko' %}일상 생활
+                        {% elif lang_code == 'de' %}Alltagsleben
+                        {% elif lang_code == 'fr' %}Vie quotidienne
+                        {% elif lang_code == 'it' %}Vita quotidiana
+                        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Vida cotidiana
+                        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Vida quotidiana
+                        {% elif lang_code == 'vi' %}Đời sống hàng ngày
+                        {% elif lang_code == 'th' %}ชีวิตประจำวัน
+                        {% else %}Everyday life{% endif %}
+                    </p>
+                </div>
+            </a>
+
+            <a href="{% url 'game_restart' %}?difficulty=hard" class="difficulty-card hard">
+                <span class="emoji">😡</span>
+                <div class="difficulty-info">
+                    <h3>HARD</h3>
+                    <p>
+                        {% if lang_code == 'ja' %}文化・芸術
+                        {% elif lang_code == 'zh-hant' %}文化與藝術
+                        {% elif lang_code == 'zh-cn' %}文化与艺术
+                        {% elif lang_code == 'ko' %}문화와 예술
+                        {% elif lang_code == 'de' %}Kultur & Kunst
+                        {% elif lang_code == 'fr' %}Culture & Arts
+                        {% elif lang_code == 'it' %}Cultura e arti
+                        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Cultura y artes
+                        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Cultura e artes
+                        {% elif lang_code == 'vi' %}Văn hóa & Nghệ thuật
+                        {% elif lang_code == 'th' %}วัฒนธรรมและศิลปะ
+                        {% else %}Culture & Arts{% endif %}
+                    </p>
+                </div>
+            </a>
+    
+            {% if player and player.total_score >= 300 %}
+            <a href="{% url 'game_restart' %}?difficulty=super_hard" class="difficulty-card super-hard">
+                <span class="emoji">👹</span>
+                <div class="difficulty-info">
+                    <h3>MANIA</h3>
+                    <p>God Tier!</p>
+                </div>
+            </a>
+            {% else %}
+                <div class="difficulty-card locked">
+                    <span class="emoji">🔒</span>
+                    <div class="difficulty-info">
+                        <h3>???</h3>
+                        <p>
+                            {% if lang_code == 'ja' %}300ptで開放
+                            {% elif lang_code == 'zh-hant' %}300pt解鎖
+                            {% elif lang_code == 'zh-cn' %}300pt解锁
+                            {% elif lang_code == 'ko' %}300pt에서 해제
+                            {% elif lang_code == 'de' %}Ab 300 Pkt.
+                            {% elif lang_code == 'fr' %}Débloquer à 300pts
+                            {% elif lang_code == 'it' %}Sblocca a 300pt
+                            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Desbloquea a 300pts
+                            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Desbloqueia a 300pts
+                            {% elif lang_code == 'vi' %}Mở khóa ở 300pt
+                            {% elif lang_code == 'th' %}ปลดล็อกที่ 300pt
+                            {% else %}Unlock at 300pts{% endif %}
+                        </p>
+                    </div>
+                    {% if not player %}
+                        <a href="{% url 'player_register' %}?next={{ request.path }}" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:10;"></a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="difficulty-options">
+            <a href="{% url 'game_restart' %}?difficulty=kanji1" class="difficulty-card easy">
+                <span class="emoji">🉐</span>
+                <div class="difficulty-info">
+                    <h3>KANJI: LEVEL 1</h3>
+                    <p>
+                        {% if lang_code == 'ja' %}生活と自然：必須の基礎漢字
+                        {% elif lang_code == 'zh-hant' %}生活與自然：必修基礎漢字
+                        {% elif lang_code == 'zh-cn' %}生活与自然：必修基礎漢字
+                        {% elif lang_code == 'ko' %}생활과 자연: 필수 기초 한자
+                        {% elif lang_code == 'de' %}Alltag & Natur: Basis-Kanji
+                        {% elif lang_code == 'fr' %}Vie & Nature : Kanji essentiels
+                        {% elif lang_code == 'it' %}Vita e Natura: Kanji essenziali
+                        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Vida y Naturaleza: Kanji esenciales
+                        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Vida e Natureza: Kanji essenciais
+                        {% elif lang_code == 'vi' %}Cuộc sống & Tự nhiên: Kanji cơ bản
+                        {% elif lang_code == 'th' %}ชีวิตและธรรมชาติ: คันจิพื้นฐานที่ต้องรู้
+                        {% else %}Life & Nature: Essential Kanji{% endif %}
+                    </p>
+                </div>
+            </a>
+
+
+            <a href="{% url 'game_restart' %}?difficulty=kanji2" class="difficulty-card normal">
+                <span class="emoji">🈴</span>
+                <div class="difficulty-info">
+                    <h3>KANJI: LEVEL 2</h3>
+                    <p>
+                        {% if lang_code == 'ja' %}文化と社会：一歩進んだ漢字
+                        {% elif lang_code == 'zh-hant' %}文化與社會：進階漢字
+                        {% elif lang_code == 'zh-cn' %}文化与社会：进阶汉字
+                        {% elif lang_code == 'ko' %}문화와 사회: 한걸음 더 나아간 한자
+                        {% elif lang_code == 'de' %}Kultur & Gesellschaft: Fortgeschrittene Kanji
+                        {% elif lang_code == 'fr' %}Culture & Société : Kanji avancés
+                        {% elif lang_code == 'it' %}Cultura e Società: Kanji avanzati
+                        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Cultura y Sociedad: Kanji avanzados
+                        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Cultura e Sociedade: Kanji avançados
+                        {% elif lang_code == 'vi' %}Văn hóa & Xã hội: Kanji nâng cao
+                        {% elif lang_code == 'th' %}วัฒนธรรมและสังคม: คันจิระดับสูง
+                        {% else %}Culture & Society: Intermediate Kanji{% endif %}
+                    </p>
+                </div>
+            </a>
+        </div>
+
+        <div class="difficulty-options">
+            <a href="{% url 'game_restart' %}?difficulty=sample_premium" class="difficulty-card sample-card">
+                <span class="emoji">🎁</span>
+                <div class="difficulty-info">
+                    <h3>FREE SAMPLE</h3>
+                    <p>
+                        {% if lang_code == 'ja' %}プレミアムお試し
+                        {% elif lang_code == 'zh-hant' %}體驗高級短語
+                        {% elif lang_code == 'zh-cn' %}体验高级短语
+                        {% elif lang_code == 'ko' %}프리미엄 체험
+                        {% elif lang_code == 'de' %}Premium testen
+                        {% elif lang_code == 'fr' %}Essai Premium
+                        {% elif lang_code == 'it' %}Prova Premium
+                        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Prueba Premium
+                        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Amostra Premium
+                        {% elif lang_code == 'vi' %}Thử Premium
+                        {% elif lang_code == 'th' %}ทดลองใช้พรีเมียม
+                        {% else %}Try Premium!{% endif %}
+                    </p>
+                </div>
+                <span class="free-badge">TRY</span>
+            </a>
+
+            <!-- LEVEL N5 -->
+            {% if user.is_authenticated and user.profile.is_premium %}
+                <a href="{% url 'game_restart' %}?difficulty=n5_premium" class="difficulty-card premium-gold">
+            {% else %}
+                <a href="{% url premium_url_name %}?next={{ request.path }}" class="difficulty-card premium-locked">
+                <div class="lock-overlay">🔒</div>
+            {% endif %}
+                <span class="emoji">🌱</span>
+                <div class="difficulty-info">
+                    <h3>LEVEL N5</h3>
+                    <p>
+                        {% if lang_code == 'ja' %}旅行者・初心者
+                        {% elif lang_code == 'zh-hant' %}旅遊・初學者
+                        {% elif lang_code == 'zh-cn' %}旅游・初学者
+                        {% elif lang_code == 'de' %}Reisende & Anfänger
+                        {% elif lang_code == 'fr' %}Voyageurs & Débutants
+                        {% elif lang_code == 'ko' %}여행자・초보자
+                        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Viajeros y principiantes
+                        {% elif lang_code == 'it' %}Viaggiatori e principianti
+                        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Viajantes e iniciantes
+                        {% elif lang_code == 'vi' %}Khách du lịch & Người mới
+                        {% elif lang_code == 'th' %}นักท่องเที่ยวและผู้เริ่มต้น
+                        {% else %}Travelers & Newbies{% endif %}
+                    </p>
+                </div>
+            </a>
+
+            <!-- LEVEL N4 -->
+            {% if user.is_authenticated and user.profile.is_premium %}
+                <a href="{% url 'game_restart' %}?difficulty=n4_premium" class="difficulty-card premium-gold">
+            {% else %}
+                <a href="{% url premium_url_name %}?next={{ request.path }}" class="difficulty-card premium-locked">
+                <div class="lock-overlay">🔒</div>
+            {% endif %}
+                <span class="emoji">🏠</span>
+                <div class="difficulty-info">
+                    <h3>LEVEL N4</h3>
+                    <p>
+                        {% if lang_code == 'ja' %}日本居住者向け
+                        {% elif lang_code == 'zh-hant' %}適合居住者
+                        {% elif lang_code == 'zh-cn' %}适合居住者
+                        {% elif lang_code == 'de' %}Für Bewohner
+                        {% elif lang_code == 'fr' %}Pour les résidents
+                        {% elif lang_code == 'ko' %}일본 거주자용
+                        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Para residentes
+                        {% elif lang_code == 'it' %}Per i residenti
+                        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Para residentes
+                        {% elif lang_code == 'vi' %}Dành cho cư dân
+                        {% elif lang_code == 'th' %}สำหรับผู้อยู่อาศัย
+                        {% else %}Residents{% endif %}
+                    </p>
+                </div>
+            </a>
+
+            <!-- LEVEL N3 -->
+            {% if user.is_authenticated and user.profile.is_premium %}
+                <a href="{% url 'game_restart' %}?difficulty=n3_premium" class="difficulty-card premium-gold">
+            {% else %}
+                <a href="{% url premium_url_name %}?next={{ request.path }}" class="difficulty-card premium-locked">
+                <div class="lock-overlay">🔒</div>
+            {% endif %}
+                <span class="emoji">💼</span>
+                <div class="difficulty-info">
+                    <h3>LEVEL N3</h3>
+                    <p>
+                        {% if lang_code == 'ja' %}ビジネス・就職
+                        {% elif lang_code == 'zh-hant' %}商務・求職
+                        {% elif lang_code == 'zh-cn' %}商务・求职
+                        {% elif lang_code == 'de' %}Beruf & Karriere
+                        {% elif lang_code == 'fr' %}Affaires & Carrière
+                        {% elif lang_code == 'ko' %}비즈니스・취업
+                        {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Negocios y empleo
+                        {% elif lang_code == 'it' %}Lavoro e carriera
+                        {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Negócios e carreira
+                        {% elif lang_code == 'vi' %}Kinh doanh & Tìm việc
+                        {% elif lang_code == 'th' %}ธุรกิจและการหางาน
+                        {% else %}Career Seekers{% endif %}
+                    </p>
+                </div>
+            </a>
+        </div>
+
+        <!-- プレイヤー情報 -->
+        <div class="player-info">
+            {% if lang_code == 'ja' %}プレイヤー
+            {% elif lang_code == 'zh-hant' or lang_code == 'zh-cn' %}玩家
+            {% elif lang_code == 'de' %}Spieler
+            {% elif lang_code == 'fr' %}Joueur
+            {% elif lang_code == 'ko' %}플레이어
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}Jugador
+            {% elif lang_code == 'it' %}Giocatore
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}Jogador
+            {% elif lang_code == 'vi' %}Người chơi
+            {% elif lang_code == 'th' %}ผู้เล่น
+            {% else %}Player{% endif %}:
+            {% if player %}{{ player.username }}{% else %}Guest{% endif %}
+        </div>
+    </div>
+
+    <!-- フッターボタン -->
+    <div style="text-align:center; margin:50px 0;">
+        <a class="btn-more" href="javascript:void(0);" onclick="goToTopPage()">
+            {% if lang_code == 'ja' %}← ホームに戻る
+            {% elif lang_code == 'zh-hant' %}← 返回首頁
+            {% elif lang_code == 'zh-cn' %}← 返回首页
+            {% elif lang_code == 'ko' %}← 홈으로 돌아가기
+            {% elif lang_code == 'de' %}← Zurück zum Home
+            {% elif lang_code == 'fr' %}← Retour à l'accueil
+            {% elif lang_code == 'es-es' or lang_code == 'es-mx' %}← Volver al inicio
+            {% elif lang_code == 'it' %}← Torna alla home
+            {% elif lang_code == 'pt' or lang_code == 'pt-br' %}← Voltar ao início
+            {% elif lang_code == 'vi' %}← Quay lại trang chủ
+            {% elif lang_code == 'th' %}← กลับสู่หน้าหลัก
+            {% else %}← Back to Home{% endif %}
+        </a>
+    </div>
+
+<script>
+    function goToTopPage() {
+        const topUrl = localStorage.getItem('tj_top_url');
+        if (topUrl) {
+            window.location.href = topUrl;
+        } else {
+            window.location.href = "{% url 'toppage' %}";
+        }
+    }
+</script>
 {% endblock %}
+

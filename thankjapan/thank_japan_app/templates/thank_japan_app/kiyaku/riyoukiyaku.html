@@ -1,0 +1,205 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Terms of Use | ThankJapan{% endblock %}
+
+{% block hreflang_tags %}
+    <link rel="alternate" hreflang="en" href="https://www.thankjapan.com/riyoukiyaku/">
+    <link rel="alternate" hreflang="ja" href="https://www.thankjapan.com/riyoukiyaku/ja/">
+    <link rel="alternate" hreflang="vi" href="https://www.thankjapan.com/riyoukiyaku/vi/">
+    <link rel="alternate" hreflang="fr" href="https://www.thankjapan.com/riyoukiyaku/fr/">
+    <link rel="alternate" hreflang="it" href="https://www.thankjapan.com/riyoukiyaku/it/">
+    <link rel="alternate" hreflang="pt" href="https://www.thankjapan.com/riyoukiyaku/pt/">
+    <link rel="alternate" hreflang="zh-hant" href="https://www.thankjapan.com/riyoukiyaku/zh-hant/">
+    <link rel="alternate" hreflang="ko" href="https://www.thankjapan.com/riyoukiyaku/ko/">
+    <link rel="alternate" hreflang="es-es" href="https://www.thankjapan.com/riyoukiyaku/es-es/">
+    <link rel="alternate" hreflang="de" href="https://www.thankjapan.com/riyoukiyaku/de/">
+    <link rel="alternate" hreflang="th" href="https://www.thankjapan.com/riyoukiyaku/th/">
+    <link rel="alternate" hreflang="pt-br" href="https://www.thankjapan.com/riyoukiyaku/pt-br/">
+    <link rel="alternate" hreflang="es-mx" href="https://www.thankjapan.com/riyoukiyaku/es-mx/">
+    <link rel="alternate" hreflang="en-in" href="https://www.thankjapan.com/riyoukiyaku/en-in/">
+    <link rel="alternate" hreflang="zh-cn" href="https://www.thankjapan.com/riyoukiyaku/zh-cn/">
+    <link rel="alternate" hreflang="x-default" href="https://www.thankjapan.com/riyoukiyaku/">
+
+{% endblock %}
+
+
+{% block content %}
+
+
+    <style>
+    
+    body {
+        background-color: #fffaf5;
+        font-family: 'Noto Sans JP', 'Poppins', sans-serif;
+        color: #fff;
+    }
+
+    .main2 {
+        max-width: 900px;
+        margin: 80px auto 100px;
+        padding: 0 20px;
+    }
+
+    .category-header {
+        text-align: center;
+        padding: 30px 20px;
+        background: linear-gradient(135deg, #ffe8d6 0%, #fffaf5 100%);
+        border-radius: 0 0 40px 40px;
+        margin-bottom: 40px;
+        color: #000;
+    }
+
+    h2 {
+        margin-top: 30px;
+        font-size: 1.2rem;
+        color: #ffd6a5;
+    }
+
+    p, li {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: #fff;
+    }
+
+    ul {
+        margin-left: 20px;
+        margin-top: 10px;
+    }
+
+    a.anchor {
+        color: #ffb347;
+        text-decoration: none;
+    }
+    a.anchor:hover {
+        text-decoration: underline;
+    }
+
+    hr {
+        border: 0;
+        border-top: 1px solid #ffd6a5;
+        margin: 20px 0;
+    }
+
+    .btn-more {
+            display: inline-block;
+            background: #ffb347;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        .btn-more:hover {
+            background: #ff9642;
+        }
+
+    .riyoudt {
+        margin-top: 30px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #ffd6a5;
+    }
+
+    .riyoudd {
+        margin-bottom: 15px;
+        margin-left: 20px;
+        font-size: 1rem; /* p, li と同じように明示 */
+        line-height: 1.6; /* p, li と同じように明示 */
+        color: #fff; /* p, li と同じように明示 */
+    }
+
+    .riyoudd ul {
+        margin-left: 20px;
+        margin-top: 5px;
+        list-style-type: disc;
+    }
+    .riyoudd ul li {
+        margin-bottom: 5px;
+    }
+
+    @media (max-width: 600px) {
+        .main2 {
+            margin: 50px 0px 50px;
+            padding: 0;
+        }
+
+        .category-header {
+            padding-top: 120px;
+        }
+    }
+    </style>
+
+<div class="main2">
+    <h1 class="category-header">Terms of Use</h1>
+    <p>ThankJapan ("we", "our", or "us") is a global learning platform. These Terms of Use (the "Terms") set forth the conditions for using our services (the "Services"). All users shall use the Services in accordance with these Terms.</p>
+
+    <dl>
+        <dt class="riyoudt">Article 1 (Application)</dt>
+        <dd class="riyoudd">These Terms apply to all relationships between the User and the Company related to the use of the Services.</dd>
+
+        <dt class="riyoudt">Article 2 (User Registration)</dt>
+        <dd class="riyoudd">Registration is completed upon approval by the Company. We may deny registration if false information is provided or if the applicant has previously violated these Terms.</dd>
+
+        <dt class="riyoudt">Article 3 (Management of ID and Password)</dt>
+        <dd class="riyoudd">Users are responsible for managing their ID and password. Transferring or lending them to third parties is strictly prohibited.</dd>
+
+        <dt class="riyoudt">Article 4 (Subscription Fees and Automatic Renewal)</dt>
+        <dd class="riyoudd">
+            1. In exchange for the "Premium Plan," Users shall pay the monthly fee displayed on the website via PayPal.<br>
+            2. The Premium Plan is a subscription that <strong>automatically renews every month</strong>. Billing occurs on the same date each month until canceled.<br>
+            3. If payment fails, the Company may suspend access to Premium features without prior notice.
+        </dd>
+
+        <dt class="riyoudt">Article 5 (Intellectual Property and AI)</dt>
+        <dd class="riyoudd">
+            1. All intellectual property rights related to the Services, including text, quiz data, and images generated by AI (e.g., Midjourney), belong to the Company.<br>
+            2. Any unauthorized reproduction, <strong>scraping, or use of our data to train other artificial intelligence models</strong> is strictly prohibited.
+        </dd>
+
+        <dt class="riyoudt">Article 6 (Prohibited Conduct)</dt>
+        <dd class="riyoudd">Users shall not engage in illegal acts, copyright infringement, server interference, unauthorized access, or use of automated systems (robots/crawlers) to access the Services.</dd>
+
+        <dt class="riyoudt">Article 7 (Suspension of Services)</dt>
+        <dd class="riyoudd">We may suspend the Services without notice for maintenance, system failure, or natural disasters.</dd>
+
+        <dt class="riyoudt">Article 8 (Usage Restrictions and Deregistration)</dt>
+        <dd class="riyoudd">The Company may restrict access or cancel registration if a User violates these Terms or defaults on payment.</dd>
+
+        <dt class="riyoudt">Article 9 (Cancellation and Refund Policy)</dt>
+        <dd class="riyoudd">
+            1. Users may cancel their Premium Plan at any time through the Account Settings.<br>
+            2. <strong>Refund Policy:</strong> Due to the nature of digital content, all payments are non-refundable. No partial refunds are provided for the remaining subscription period.
+        </dd>
+
+        <dt class="riyoudt">Article 10 (Disclaimer of AI Content and Results)</dt>
+        <dd class="riyoudd">
+            1. The Services utilize AI to generate certain content. We do not guarantee absolute accuracy or completeness.<br>
+            2. <strong>No Guarantee of Outcomes:</strong> We do not guarantee specific results, such as passing the JLPT or securing employment in Japan.
+        </dd>
+
+        <dt class="riyoudt">Article 11 (Disclaimer of Warranties and Liability)</dt>
+        <dd class="riyoudd">The Company shall not be liable for any damage arising from the Services unless there is willful misconduct or gross negligence. Liability is limited to the fee received in the month the damage occurred.</dd>
+
+        <dt class="riyoudt">Article 12 (Changes to Services and Terms)</dt>
+        <dd class="riyoudd">The Company may change the Services or modify these Terms at any time by posting notice on the website.</dd>
+
+        <dt class="riyoudt">Article 13 (Personal Information)</dt>
+        <dd class="riyoudd">We handle personal information appropriately in accordance with our Privacy Policy.</dd>
+
+        <dt class="riyoudt">Article 14 (Exclusion of Criminal Organizations)</dt>
+        <dd class="riyoudd">Users represent and warrant that they are not members of organized crime groups or any other criminal organizations. Any violation of this provision shall result in the immediate termination of the User's access and this agreement.</dd>
+
+        <dt class="riyoudt">Article 15 (Governing Law and Jurisdiction)</dt>
+        <dd class="riyoudd">These Terms are governed by the laws of Japan. Any disputes shall be subject to the exclusive jurisdiction of the courts in Japan.</dd>
+    </dl>
+
+    <p style="font-size:1.0rem; color:#fff;">Last Updated: March 2026.</p>
+
+    <div style="text-align:center; margin:50px 0;">
+        <a class="btn-more" href="{% url 'toppage' %}">Back to Home</a>
+    </div>
+</div>
+{% endblock %}
